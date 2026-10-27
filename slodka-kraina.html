@@ -130,14 +130,14 @@
 <script>
   /* ====== USTAWIENIA – możesz to zmienić ====== */
   const CONFIG = {
-    name: "Kochanie",       // jak się do niej zwracasz
-    from: "Twój chłopak",   // podpis
+    name: "Marysiu",        // jak się do niej zwracasz
+    from: "Franek",         // podpis
     notes: [                // liściki po poziomie 1 i 2
-      "Jesteś słodsza niż wszystkie te cukierki razem wzięte 🍬",
-      "Nawet chmurki Cię nie zatrzymały! Tak samo nic nie przeszkodzi mi w myśleniu o Tobie 💭💖",
+      "Bardzo ładnie, gruby! 😄",
+      "Bardzo ładnie, gruby! 😄",
     ],
-    finalMessage: "Zebrałaś wszystkie słodycze… ale i tak najsłodsza jesteś Ty. Kocham Cię! 💖",
-    prize: "Twoja nagroda: 🍫 słodka niespodzianka + 100 buziaków",
+    finalMessage: "Nie jedz tyle, bo będziesz mieć brzuszek! 😜",
+    prize: "Twoja nagroda: buziaczek 😘",
   };
   /* ============================================ */
 
@@ -356,7 +356,9 @@
         popups.push({ x: c.x, y: c.y, t: 0.9, text: "+1" });
         beep(600 + collected * 25, 1100 + collected * 25, 0.1, "sine");
         if (collected === total) {
-          gift = { ...freeSpot(22, 60), ph: 0 };
+          let spot = freeSpot(22, 60);
+          for (let k = 0; k < 50 && dist(spot, player) < 200; k++) spot = freeSpot(22, 60);
+          gift = { ...spot, ph: 0 };
           toast("Wszystko zebrane! Znajdź prezent 🎁");
           melody();
         }
