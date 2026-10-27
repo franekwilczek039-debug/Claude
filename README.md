@@ -25,3 +25,19 @@ Na dole pliku, w sekcji `USTAWIENIA`, możesz zmienić:
 - listę komplementów, pomysłów na randkę, deserów i tekstów przycisku „Nie”.
 
 Plik otwórz w Notatniku, zmień tekst w cudzysłowach i zapisz.
+
+---
+
+# 🍭 Słodka Kraina
+
+Cukierkowa gra w pliku `slodka-kraina.html`. Wybierasz postać (🐰🐱🐻🦄🐹🐼) i chodzisz po krainie
+z lizakowymi drzewkami. Zbierasz słodycze i omijasz deszczowe chmurki 🌧️. Po każdym poziomie
+dostajesz prezent 🎁 z liścikiem, a po 3. poziomie jest wielki finał.
+
+**Sterowanie:** strzałki albo WASD. Można też kliknąć myszką miejsce, do którego postać ma iść.
+
+**Jak otworzyć:** tak samo jak wyżej. Pobierz plik, kliknij go dwa razy
+(albo prawy przycisk → Otwórz za pomocą → Chrome/Edge).
+
+**Personalizacja:** otwórz plik w Notatniku, naciśnij Ctrl+F i wyszukaj `USTAWIENIA`.
+Zmieniasz tam `name`, `from`, liściki (`notes`), wiadomość końcową (`finalMessage`) i nagrodę (`prize`).

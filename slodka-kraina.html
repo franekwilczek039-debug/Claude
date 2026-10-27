@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Słodka Kraina 🍭</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --pink: #ff7eb6;
+    --pink-dark: #d94f8f;
+    --cream: #fff6fb;
+    --ink: #6b2d55;
+    --shadow: #f3b3cf;
+    --font: "Fredoka", "Comic Sans MS", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--font);
+    color: var(--ink);
+    background: linear-gradient(160deg, #ffd6ea, #e8dcff 60%, #cdf5ea);
+    overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; user-select: none;
+  }
+  #hud { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .pill {
+    background: var(--cream); border-radius: 999px; padding: 6px 16px;
+    font-weight: 600; font-size: 1.05rem; box-shadow: 0 3px 0 var(--shadow);
+    font-variant-numeric: tabular-nums;
+  }
+  #wrap { position: relative; }
+  canvas {
+    display: block; border-radius: 26px; border: 6px solid #fff;
+    box-shadow: 0 10px 0 #f0a8cb, 0 20px 40px rgba(217, 79, 143, .3);
+    touch-action: none; cursor: pointer;
+  }
+  .overlay {
+    position: absolute; inset: 0; border-radius: 26px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 20px; text-align: center;
+    background: rgba(255, 240, 248, .9); backdrop-filter: blur(4px);
+  }
+  .overlay[hidden] { display: none; }
+  h1 {
+    margin: 0; font-size: clamp(2rem, 5vw, 3.4rem); color: var(--pink); line-height: 1.1;
+    text-shadow: 0 3px 0 #fff, 0 6px 0 #f7c1da;
+  }
+  p { margin: 0; font-size: 1.15rem; line-height: 1.5; max-width: 40ch; }
+  .hint { font-size: .98rem; opacity: .85; }
+  button {
+    font-family: var(--font); font-weight: 700; font-size: 1.2rem;
+    border: none; border-radius: 999px; padding: 12px 30px; cursor: pointer;
+    background: var(--pink); color: #fff; box-shadow: 0 6px 0 var(--pink-dark);
+    transition: transform .12s, box-shadow .12s;
+  }
+  button:hover { transform: translateY(-2px); }
+  button:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--pink-dark); }
+  button:focus-visible { outline: 3px dashed var(--pink-dark); outline-offset: 4px; }
+  .small { font-size: 1rem; padding: 6px 14px; box-shadow: 0 3px 0 var(--pink-dark); }
+  .chars { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .char {
+    font-size: 2.4rem; padding: 8px 14px; border-radius: 20px;
+    background: #fff; box-shadow: 0 5px 0 var(--shadow);
+  }
+  .char.sel { background: var(--pink); box-shadow: 0 5px 0 var(--pink-dark); transform: scale(1.1); }
+  .note {
+    background: #fff; border-radius: 22px; padding: 18px 24px; max-width: 36ch;
+    font-size: 1.2rem; line-height: 1.55; box-shadow: 0 6px 0 var(--shadow);
+  }
+  .big-emoji { font-size: 4rem; line-height: 1; }
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <span class="pill" id="hudLevel">Poziom 1/3</span>
+  <span class="pill" id="hudCandy">🍬 0/0</span>
+  <span class="pill" id="hudLives">❤️❤️❤️</span>
+  <span class="pill" id="hudTime">⏱ 0:00</span>
+  <button class="small" id="muteBtn" aria-label="Dźwięk">🔊</button>
+</div>
+
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <!-- Start -->
+  <div class="overlay" id="startScreen">
+    <h1>Słodka Kraina 🍭</h1>
+    <p>Hej <b class="name"></b>! Wybierz swoją postać:</p>
+    <div class="chars" id="chars"></div>
+    <p class="hint">Chodzisz <b>strzałkami</b> albo <b>WASD</b>, możesz też <b>klikać myszką</b> tam, gdzie chcesz iść.<br>
+      Zbierz wszystkie słodycze 🍬, a potem znajdź prezent 🎁.<br>Uważaj na deszczowe chmurki 🌧️!</p>
+    <button id="playBtn">Graj! 🍭</button>
+  </div>
+
+  <!-- Liścik po poziomie -->
+  <div class="overlay" id="noteScreen" hidden>
+    <div class="big-emoji">🎁</div>
+    <h1 id="noteTitle">Brawo!</h1>
+    <div class="note" id="noteText"></div>
+    <button id="nextBtn">Następny poziom ➜</button>
+  </div>
+
+  <!-- Przegrana -->
+  <div class="overlay" id="loseScreen" hidden>
+    <div class="big-emoji">☔</div>
+    <h1>Ojej, zmokłaś!</h1>
+    <p>Chmurki dziś złośliwe… ale Ty dasz radę 💪</p>
+    <button id="retryBtn">Spróbuj jeszcze raz</button>
+  </div>
+
+  <!-- Wygrana -->
+  <div class="overlay" id="winScreen" hidden>
+    <div class="big-emoji">👑</div>
+    <h1>Wygrałaś!</h1>
+    <div class="note">
+      <span id="finalMsg"></span><br><br>
+      <b id="prize"></b><br><br>
+      <span id="finalStats"></span><br>
+      — <span class="from"></span> 💌
+    </div>
+    <p class="hint">Zrób screena i wyślij mi go 😘</p>
+    <button id="againBtn">Zagraj jeszcze raz</button>
+  </div>
+</div>
+
+<script>
+  /* ====== USTAWIENIA – możesz to zmienić ====== */
+  const CONFIG = {
+    name: "Kochanie",       // jak się do niej zwracasz
+    from: "Twój chłopak",   // podpis
+    notes: [                // liściki po poziomie 1 i 2
+      "Jesteś słodsza niż wszystkie te cukierki razem wzięte 🍬",
+      "Nawet chmurki Cię nie zatrzymały! Tak samo nic nie przeszkodzi mi w myśleniu o Tobie 💭💖",
+    ],
+    finalMessage: "Zebrałaś wszystkie słodycze… ale i tak najsłodsza jesteś Ty. Kocham Cię! 💖",
+    prize: "Twoja nagroda: 🍫 słodka niespodzianka + 100 buziaków",
+  };
+  /* ============================================ */
+
+  const W = 960, H = 600;
+  const LEVELS = [
+    { candies: 10, clouds: 0, trees: 7,  heart: false, ground: ["#ffe6f2", "#ffd3e8"] },
+    { candies: 14, clouds: 2, trees: 9,  heart: true,  ground: ["#e4faf1", "#c9f2e2"] },
+    { candies: 18, clouds: 4, trees: 11, heart: true,  ground: ["#f0e8ff", "#ddd0ff"] },
+  ];
+  const CHARS = ["🐰", "🐱", "🐻", "🦄", "🐹", "🐼"];
+  const SWEETS = ["🍬", "🍭", "🍩", "🧁", "🍓", "🍫", "🍪"];
+  const CANDY_COLORS = ["#ff7eb6", "#8fd3ff", "#ffcf5c", "#b49bff", "#7ee0b5", "#ff9e7a"];
+  const EMOJI_FONT = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+
+  const $ = (id) => document.getElementById(id);
+  const canvas = $("game");
+  const ctx = canvas.getContext("2d");
+  document.querySelectorAll(".name").forEach((e) => (e.textContent = CONFIG.name));
+  document.querySelectorAll(".from").forEach((e) => (e.textContent = CONFIG.from));
+
+  // ---------- Skalowanie ----------
+  function resize() {
+    const hudH = $("hud").offsetHeight + 40;
+    const s = Math.min((innerWidth - 24) / W, (innerHeight - hudH) / H, 1.35);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.style.width = W * s + "px";
+    canvas.style.height = H * s + "px";
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  addEventListener("resize", resize);
+  resize();
+
+  // ---------- Dźwięki ----------
+  let actx = null, muted = false;
+  function beep(f1, f2, dur = 0.12, type = "sine", vol = 0.12, delay = 0) {
+    if (muted) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime + delay;
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f1, t);
+      o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.connect(g).connect(actx.destination);
+      o.start(t); o.stop(t + dur);
+    } catch (e) {}
+  }
+  const melody = () => [523, 659, 784, 1047].forEach((f, i) => beep(f, f, 0.18, "triangle", 0.12, i * 0.12));
+  $("muteBtn").addEventListener("click", () => {
+    muted = !muted;
+    $("muteBtn").textContent = muted ? "🔇" : "🔊";
+  });
+
+  // ---------- Stan gry ----------
+  let state = "menu";          // menu | play | pause | win
+  let charEmoji = CHARS[0];
+  let level = 0, lives = 3, invuln = 0, totalTime = 0;
+  let player, trees, candies, clouds, pickups, gift, collected, total;
+  let particles = [], popups = [], bg = null, target = null, toastText = "", toastT = 0;
+  const keys = new Set();
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+  function freeSpot(r, minFromStart = 110) {
+    for (let i = 0; i < 400; i++) {
+      const p = { x: rand(40 + r, W - 40 - r), y: rand(50 + r, H - 30 - r) };
+      if (dist(p, { x: 90, y: H / 2 }) < minFromStart) continue;
+      if (trees.some((t) => dist(p, t) < t.r + r + 18)) continue;
+      if (candies.some((c) => dist(p, c) < 46)) continue;
+      return p;
+    }
+    return { x: rand(100, W - 60), y: rand(60, H - 40) };
+  }
+
+  function buildBackground(colors) {
+    bg = document.createElement("canvas");
+    bg.width = W; bg.height = H;
+    const b = bg.getContext("2d");
+    const g = b.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, colors[0]); g.addColorStop(1, colors[1]);
+    b.fillStyle = g; b.fillRect(0, 0, W, H);
+    // posypka
+    for (let i = 0; i < 260; i++) {
+      b.save();
+      b.translate(rand(0, W), rand(0, H));
+      b.rotate(rand(0, Math.PI));
+      b.globalAlpha = 0.55;
+      b.fillStyle = CANDY_COLORS[i % CANDY_COLORS.length];
+      b.beginPath(); b.roundRect(-6, -2, 12, 4, 2); b.fill();
+      b.restore();
+    }
+    // kwiatki i kropki
+    b.globalAlpha = 0.45;
+    b.font = `22px ${EMOJI_FONT}`;
+    b.textAlign = "center"; b.textBaseline = "middle";
+    for (let i = 0; i < 14; i++) b.fillText(["🌸", "🌷", "✿"][i % 3], rand(20, W - 20), rand(20, H - 20));
+    b.globalAlpha = 1;
+  }
+
+  function startLevel(i) {
+    level = i;
+    const L = LEVELS[i];
+    lives = Math.max(lives, 1);
+    invuln = 1;
+    player = { x: 90, y: H / 2, r: 20, face: 1, moving: false, t: 0 };
+    trees = []; candies = []; clouds = []; pickups = [];
+    gift = null; collected = 0; total = L.candies; target = null;
+    particles = []; popups = [];
+    for (let k = 0; k < L.trees; k++) {
+      const p = freeSpot(30, 150);
+      trees.push({ ...p, r: 26, c: CANDY_COLORS[k % CANDY_COLORS.length] });
+    }
+    for (let k = 0; k < L.candies; k++) {
+      const p = freeSpot(16);
+      candies.push({ ...p, e: SWEETS[k % SWEETS.length], ph: rand(0, 6) });
+    }
+    for (let k = 0; k < L.clouds; k++) {
+      const a = rand(0, Math.PI * 2), sp = rand(70, 110) + i * 15;
+      clouds.push({ x: rand(W / 2, W - 60), y: rand(60, H - 60), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 22 });
+    }
+    if (L.heart) pickups.push({ ...freeSpot(16), e: "💖", ph: 0 });
+    buildBackground(L.ground);
+    toast(i === 0 ? "Zbierz wszystkie słodycze! 🍬" : `Poziom ${i + 1}! ${L.clouds ? "Uważaj na chmurki 🌧️" : ""}`);
+    state = "play";
+    updateHud();
+  }
+
+  function toast(t) { toastText = t; toastT = 2.4; }
+
+  function updateHud() {
+    $("hudLevel").textContent = `Poziom ${level + 1}/${LEVELS.length}`;
+    $("hudCandy").textContent = `🍬 ${collected}/${total}`;
+    $("hudLives").textContent = "❤️".repeat(lives) + "🤍".repeat(Math.max(0, 3 - lives));
+    const s = Math.floor(totalTime);
+    $("hudTime").textContent = `⏱ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }
+
+  function burst(x, y, n, emoji) {
+    for (let i = 0; i < n; i++) {
+      const a = rand(0, Math.PI * 2), sp = rand(60, 200);
+      particles.push({
+        x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60, life: rand(0.5, 0.9),
+        c: CANDY_COLORS[i % CANDY_COLORS.length], e: emoji && i % 3 === 0 ? emoji : null,
+      });
+    }
+  }
+
+  // ---------- Sterowanie ----------
+  addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d"].includes(k)) {
+      keys.add(k); target = null; e.preventDefault();
+    }
+  });
+  addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+  addEventListener("blur", () => keys.clear());
+
+  let pointerDown = false;
+  function setTarget(e) {
+    const r = canvas.getBoundingClientRect();
+    target = { x: ((e.clientX - r.left) / r.width) * W, y: ((e.clientY - r.top) / r.height) * H };
+  }
+  canvas.addEventListener("pointerdown", (e) => { pointerDown = true; setTarget(e); });
+  canvas.addEventListener("pointermove", (e) => { if (pointerDown) setTarget(e); });
+  addEventListener("pointerup", () => (pointerDown = false));
+
+  // ---------- Logika ----------
+  function update(dt) {
+    totalTime += dt;
+    player.t += dt;
+    if (invuln > 0) invuln -= dt;
+    if (toastT > 0) toastT -= dt;
+
+    // ruch gracza
+    let dx = 0, dy = 0;
+    if (keys.has("arrowleft") || keys.has("a")) dx--;
+    if (keys.has("arrowright") || keys.has("d")) dx++;
+    if (keys.has("arrowup") || keys.has("w")) dy--;
+    if (keys.has("arrowdown") || keys.has("s")) dy++;
+    if (!dx && !dy && target) {
+      const tx = target.x - player.x, ty = target.y - player.y, d = Math.hypot(tx, ty);
+      if (d > 6) { dx = tx / d; dy = ty / d; } else target = null;
+    }
+    const len = Math.hypot(dx, dy);
+    player.moving = len > 0;
+    if (len) {
+      const speed = 240;
+      player.x += (dx / len) * speed * dt;
+      player.y += (dy / len) * speed * dt;
+      if (dx) player.face = dx > 0 ? 1 : -1;
+    }
+    player.x = Math.max(player.r, Math.min(W - player.r, player.x));
+    player.y = Math.max(player.r + 10, Math.min(H - player.r, player.y));
+
+    // drzewka-lizaki jako przeszkody
+    for (const t of trees) {
+      const d = dist(player, t), min = player.r + t.r;
+      if (d < min && d > 0) {
+        player.x = t.x + ((player.x - t.x) / d) * min;
+        player.y = t.y + ((player.y - t.y) / d) * min;
+      }
+    }
+
+    // słodycze
+    for (let i = candies.length - 1; i >= 0; i--) {
+      const c = candies[i];
+      if (dist(player, c) < player.r + 16) {
+        candies.splice(i, 1);
+        collected++;
+        burst(c.x, c.y, 10, "✨");
+        popups.push({ x: c.x, y: c.y, t: 0.9, text: "+1" });
+        beep(600 + collected * 25, 1100 + collected * 25, 0.1, "sine");
+        if (collected === total) {
+          gift = { ...freeSpot(22, 60), ph: 0 };
+          toast("Wszystko zebrane! Znajdź prezent 🎁");
+          melody();
+        }
+        updateHud();
+      }
+    }
+
+    // serduszko = dodatkowe życie
+    for (let i = pickups.length - 1; i >= 0; i--) {
+      if (dist(player, pickups[i]) < player.r + 16) {
+        burst(pickups[i].x, pickups[i].y, 12, "💖");
+        pickups.splice(i, 1);
+        lives = Math.min(3, lives + 1);
+        toast("Dodatkowe serduszko! 💖");
+        beep(500, 1400, 0.25, "triangle");
+        updateHud();
+      }
+    }
+
+    // chmurki
+    for (const c of clouds) {
+      c.x += c.vx * dt; c.y += c.vy * dt;
+      if (c.x < c.r || c.x > W - c.r) c.vx *= -1;
+      if (c.y < c.r + 10 || c.y > H - c.r) c.vy *= -1;
+      c.x = Math.max(c.r, Math.min(W - c.r, c.x));
+      c.y = Math.max(c.r + 10, Math.min(H - c.r, c.y));
+      if (invuln <= 0 && dist(player, c) < player.r + c.r - 6) {
+        lives--; invuln = 1.6;
+        burst(player.x, player.y, 10, "💧");
+        beep(320, 120, 0.3, "triangle", 0.15);
+        updateHud();
+        if (lives <= 0) { state = "pause"; $("loseScreen").hidden = false; }
+      }
+    }
+
+    // prezent
+    if (gift && dist(player, gift) < player.r + 24) {
+      burst(gift.x, gift.y, 30, "💖");
+      gift = null;
+      melody();
+      state = "pause";
+      if (level === LEVELS.length - 1) {
+        setTimeout(win, 400);
+      } else {
+        $("noteTitle").textContent = `Poziom ${level + 1} zaliczony!`;
+        $("noteText").textContent = CONFIG.notes[level] || "Brawo! 💖";
+        setTimeout(() => ($("noteScreen").hidden = false), 400);
+      }
+    }
+  }
+
+  function win() {
+    state = "win";
+    const s = Math.floor(totalTime);
+    $("finalMsg").textContent = CONFIG.finalMessage;
+    $("prize").textContent = CONFIG.prize;
+    $("finalStats").textContent = `Twój czas: ${Math.floor(s / 60)} min ${s % 60} s`;
+    $("winScreen").hidden = false;
+  }
+
+  function updateFx(dt) {
+    for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; p.life -= dt; }
+    particles = particles.filter((p) => p.life > 0);
+    for (const p of popups) { p.y -= 40 * dt; p.t -= dt; }
+    popups = popups.filter((p) => p.t > 0);
+    if (state === "win" && Math.random() < 0.5) {
+      particles.push({ x: rand(0, W), y: -20, vx: rand(-30, 30), vy: rand(40, 120), life: 4,
+        c: CANDY_COLORS[Math.floor(rand(0, 6))], e: Math.random() < 0.4 ? ["💖", "🍬", "🍭", "✨"][Math.floor(rand(0, 4))] : null });
+    }
+  }
+
+  // ---------- Rysowanie ----------
+  function emoji(e, x, y, size) {
+    ctx.font = `${size}px ${EMOJI_FONT}`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(e, x, y);
+  }
+  function shadow(x, y, w) {
+    ctx.fillStyle = "rgba(160, 60, 120, .15)";
+    ctx.beginPath(); ctx.ellipse(x, y, w, w * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  function drawTree(t) {
+    shadow(t.x, t.y + 34, 22);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = "#f0c6d9"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(t.x - 4, t.y, 8, 36, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = t.c;
+    ctx.beginPath(); ctx.arc(t.x, t.y - 6, t.r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 4; ctx.lineCap = "round";
+    ctx.beginPath();
+    for (let a = 0; a < Math.PI * 5; a += 0.2) {
+      const r = (a / (Math.PI * 5)) * (t.r - 4);
+      const px = t.x + Math.cos(a) * r, py = t.y - 6 + Math.sin(a) * r;
+      a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,.5)";
+    ctx.beginPath(); ctx.arc(t.x - 9, t.y - 16, 5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function draw(now) {
+    ctx.clearRect(0, 0, W, H);
+    if (bg) ctx.drawImage(bg, 0, 0);
+    else { ctx.fillStyle = "#ffe6f2"; ctx.fillRect(0, 0, W, H); }
+    if (!player) return;
+    const t = now / 1000;
+
+    // obiekty sortowane po wysokości, żeby ładnie na siebie nachodziły
+    const list = [];
+    trees.forEach((tr) => list.push({ y: tr.y + 30, f: () => drawTree(tr) }));
+    candies.forEach((c) => list.push({ y: c.y, f: () => {
+      shadow(c.x, c.y + 16, 12);
+      emoji(c.e, c.x, c.y + Math.sin(t * 3 + c.ph) * 4, 30);
+    } }));
+    pickups.forEach((p) => list.push({ y: p.y, f: () => {
+      shadow(p.x, p.y + 16, 12);
+      emoji(p.e, p.x, p.y, 28 + Math.sin(t * 6) * 4);
+    } }));
+    if (gift) list.push({ y: gift.y, f: () => {
+      ctx.fillStyle = `rgba(255, 220, 120, ${0.35 + Math.sin(t * 5) * 0.15})`;
+      ctx.beginPath(); ctx.arc(gift.x, gift.y, 40, 0, Math.PI * 2); ctx.fill();
+      shadow(gift.x, gift.y + 22, 16);
+      emoji("🎁", gift.x, gift.y + Math.sin(t * 4) * 3, 40);
+    } });
+    list.push({ y: player.y + 10, f: () => {
+      shadow(player.x, player.y + 20, 16);
+      if (invuln > 0 && state === "play" && Math.floor(invuln * 10) % 2) return;
+      const bob = player.moving ? Math.abs(Math.sin(player.t * 12)) * -5 : Math.sin(player.t * 3) * 1.5;
+      ctx.save();
+      ctx.translate(player.x, player.y + bob);
+      ctx.scale(player.face, 1);
+      emoji(charEmoji, 0, 0, 40);
+      ctx.restore();
+    } });
+    list.sort((a, b) => a.y - b.y).forEach((o) => o.f());
+
+    // chmurki latają nad wszystkim
+    for (const c of clouds) {
+      shadow(c.x, c.y + 40, 18);
+      emoji("🌧️", c.x, c.y + Math.sin(t * 2 + c.x) * 3, 42);
+    }
+
+    // cel kliknięcia
+    if (target && state === "play") {
+      ctx.strokeStyle = "rgba(255, 126, 182, .7)"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(target.x, target.y, 10 + Math.sin(t * 8) * 2, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    // efekty
+    for (const p of particles) {
+      ctx.globalAlpha = Math.min(1, p.life * 2);
+      if (p.e) emoji(p.e, p.x, p.y, 18);
+      else { ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.globalAlpha = 1;
+    ctx.font = `700 22px ${getComputedStyle(document.body).fontFamily}`;
+    for (const p of popups) {
+      ctx.globalAlpha = Math.min(1, p.t * 2);
+      ctx.fillStyle = "#d94f8f"; ctx.fillText(p.text, p.x, p.y - 20);
+    }
+    ctx.globalAlpha = 1;
+
+    // komunikat
+    if (toastT > 0 && state === "play") {
+      ctx.globalAlpha = Math.min(1, toastT * 2);
+      ctx.font = `600 24px ${getComputedStyle(document.body).fontFamily}`;
+      const w = ctx.measureText(toastText).width + 40;
+      ctx.fillStyle = "rgba(255,255,255,.92)";
+      ctx.beginPath(); ctx.roundRect(W / 2 - w / 2, 18, w, 46, 23); ctx.fill();
+      ctx.fillStyle = "#6b2d55"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(toastText, W / 2, 42);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (state === "play") { update(dt); if (Math.floor(totalTime * 4) !== Math.floor((totalTime - dt) * 4)) updateHud(); }
+    updateFx(dt);
+    draw(now);
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Ekrany ----------
+  CHARS.forEach((c, i) => {
+    const b = document.createElement("button");
+    b.className = "char" + (i === 0 ? " sel" : "");
+    b.textContent = c;
+    b.addEventListener("click", () => {
+      charEmoji = c;
+      document.querySelectorAll(".char").forEach((x) => x.classList.remove("sel"));
+      b.classList.add("sel");
+      beep(700, 1000, 0.08);
+    });
+    $("chars").appendChild(b);
+  });
+
+  function newGame() {
+    lives = 3; totalTime = 0;
+    startLevel(0);
+  }
+  $("playBtn").addEventListener("click", () => { $("startScreen").hidden = true; newGame(); });
+  $("nextBtn").addEventListener("click", () => { $("noteScreen").hidden = true; startLevel(level + 1); });
+  $("retryBtn").addEventListener("click", () => { $("loseScreen").hidden = true; lives = 3; startLevel(level); });
+  $("againBtn").addEventListener("click", () => {
+    $("winScreen").hidden = true; particles = [];
+    $("startScreen").hidden = false; state = "menu";
+  });
+
+  // podgląd planszy w tle menu
+  trees = []; candies = []; clouds = []; pickups = [];
+  startLevel(0); state = "menu"; toastT = 0;
+  requestAnimationFrame(loop);
+</script>
+</body>
+</html>
