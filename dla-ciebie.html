@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dla Ciebie 💌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;600;700&display=swap">
+<style>
+  :root {
+    --bg1: #ffe3ec;
+    --bg2: #ffc2d6;
+    --rose: #e75480;
+    --rose-dark: #b8325c;
+    --ink: #5a2238;
+    --card: #fff7fa;
+    --display: "Pacifico", "Brush Script MT", cursive;
+    --body: "Quicksand", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--body);
+    color: var(--ink);
+    background: radial-gradient(circle at 20% 20%, var(--bg1), var(--bg2));
+    overflow: hidden;
+    user-select: none;
+  }
+  #floaty { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .float-heart {
+    position: absolute; bottom: -40px; opacity: .35;
+    animation: drift linear forwards;
+  }
+  @keyframes drift {
+    to { transform: translateY(-115vh) rotate(25deg); }
+  }
+
+  .screen {
+    position: fixed; inset: 0; z-index: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 22px; padding: 24px; text-align: center;
+  }
+  .screen[hidden] { display: none; }
+  h1 {
+    font-family: var(--display); font-weight: 400; color: var(--rose);
+    font-size: clamp(2.2rem, 6vw, 3.6rem); margin: 0; line-height: 1.2;
+    text-shadow: 0 3px 0 #fff;
+  }
+  p.lead { font-size: clamp(1.05rem, 2.5vw, 1.35rem); max-width: 34ch; margin: 0; line-height: 1.5; }
+
+  button {
+    font-family: var(--body); font-weight: 700; font-size: 1.15rem;
+    border: none; border-radius: 999px; padding: 14px 32px; cursor: pointer;
+    background: var(--rose); color: #fff;
+    box-shadow: 0 6px 0 var(--rose-dark);
+    transition: transform .15s, box-shadow .15s;
+  }
+  button:hover { transform: translateY(-2px); }
+  button:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--rose-dark); }
+  button:focus-visible { outline: 3px dashed var(--rose-dark); outline-offset: 4px; }
+  button.ghost { background: #fff; color: var(--rose); box-shadow: 0 6px 0 #f3b3c7; }
+
+  /* Koperta */
+  .envelope {
+    font-size: 7rem; cursor: pointer; animation: bob 1.8s ease-in-out infinite;
+    background: none; border: none; box-shadow: none; padding: 0;
+  }
+  .envelope:hover { transform: scale(1.08); }
+  @keyframes bob { 50% { transform: translateY(-12px) rotate(-4deg); } }
+
+  /* Gra */
+  #game { justify-content: flex-start; padding-top: 28px; }
+  .hud {
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: center;
+    background: var(--card); padding: 10px 20px; border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(231,84,128,.18);
+  }
+  .bar { width: 180px; height: 14px; background: #ffd6e3; border-radius: 99px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--rose); transition: width .3s; }
+  #compliment {
+    min-height: 2.2em; font-size: clamp(1.1rem, 2.6vw, 1.5rem); font-weight: 700; color: var(--rose-dark);
+  }
+  #field { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+  .catch {
+    position: absolute; bottom: -70px; font-size: 3rem; cursor: pointer; pointer-events: auto;
+    animation: rise linear forwards; transition: transform .1s;
+  }
+  .catch:hover { transform: scale(1.2); }
+  @keyframes rise { to { bottom: 110vh; } }
+  .pop { animation: pop .35s ease-out forwards !important; pointer-events: none; }
+  @keyframes pop { to { transform: scale(2.2); opacity: 0; } }
+
+  /* Pytanie */
+  .btn-row { display: flex; gap: 22px; align-items: center; justify-content: center; flex-wrap: wrap; min-height: 90px; }
+  #yesBtn { transition: transform .25s; }
+  #noBtn.running { position: fixed; transition: left .25s, top .25s; z-index: 5; }
+  .gif { font-size: 5rem; }
+
+  /* Wybór randki */
+  .options {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px; width: min(680px, 100%);
+  }
+  .opt {
+    background: var(--card); color: var(--ink); box-shadow: 0 6px 0 #f3b3c7;
+    border-radius: 22px; padding: 18px 12px; display: flex; flex-direction: column; gap: 6px;
+    align-items: center; font-size: 1rem;
+  }
+  .opt span.e { font-size: 2.6rem; }
+  .opt.selected { background: var(--rose); color: #fff; box-shadow: 0 6px 0 var(--rose-dark); }
+
+  .summary {
+    background: var(--card); border-radius: 24px; padding: 22px 28px;
+    box-shadow: 0 8px 26px rgba(231,84,128,.22); font-size: 1.15rem; line-height: 1.8;
+  }
+  .summary b { color: var(--rose); }
+
+  .confetti {
+    position: fixed; top: -50px; z-index: 10; pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall { to { transform: translateY(115vh) rotate(540deg); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .envelope { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div id="floaty"></div>
+
+<!-- 1. Koperta -->
+<section class="screen" id="intro">
+  <h1>Hej, <span class="name"></span>!</h1>
+  <p class="lead">Ktoś zostawił dla Ciebie liścik… Kliknij kopertę 💌</p>
+  <button class="envelope" id="envelope" aria-label="Otwórz kopertę">💌</button>
+</section>
+
+<!-- 2. Minigra -->
+<section class="screen" id="gameIntro" hidden>
+  <h1>Mała gra 💘</h1>
+  <p class="lead">Zanim przeczytasz liścik, musisz złapać <b>10 serduszek</b>.
+    Klikaj w nie, zanim odlecą! Każde ma dla Ciebie małą wiadomość.</p>
+  <button id="startGame">Zaczynamy!</button>
+</section>
+
+<section class="screen" id="game" hidden>
+  <div class="hud">
+    <span>Złapane: <b id="score">0</b> / 10</span>
+    <div class="bar"><i id="barFill"></i></div>
+  </div>
+  <div id="compliment"></div>
+</section>
+<div id="field"></div>
+
+<!-- 3. Pytanie -->
+<section class="screen" id="question" hidden>
+  <div class="gif" id="qEmoji">🥰</div>
+  <h1>Pójdziesz ze mną na randkę?</h1>
+  <div class="btn-row">
+    <button id="yesBtn">Tak! 💖</button>
+    <button id="noBtn" class="ghost">Nie</button>
+  </div>
+  <p class="lead" id="noText"></p>
+</section>
+
+<!-- 4. Wybór randki -->
+<section class="screen" id="choose" hidden>
+  <h1>Jeeej! 🥳</h1>
+  <p class="lead">To co robimy? Wybierz, na co masz ochotę:</p>
+  <div class="options" id="dateOptions"></div>
+  <p class="lead">A do tego na deser:</p>
+  <div class="options" id="snackOptions"></div>
+  <button id="confirm" disabled style="opacity:.5">Gotowe 💌</button>
+</section>
+
+<!-- 5. Finał -->
+<section class="screen" id="final" hidden>
+  <div class="gif">💞</div>
+  <h1>Jesteśmy umówieni!</h1>
+  <div class="summary" id="summary"></div>
+  <p class="lead">Zrób screena i wyślij mi go 😘<br>Już nie mogę się doczekać!</p>
+  <button class="ghost" id="again">Jeszcze raz od początku</button>
+</section>
+
+<script>
+  /* ====== USTAWIENIA – możesz to zmienić ====== */
+  const CONFIG = {
+    name: "Kochanie",          // jak się do niej zwracasz
+    from: "Twój chłopak",      // podpis
+    compliments: [
+      "Masz najpiękniejszy uśmiech na świecie 😊",
+      "Przy Tobie każdy dzień jest lepszy ☀️",
+      "Uwielbiam, jak się śmiejesz 💕",
+      "Jesteś moją ulubioną osobą 🫶",
+      "Twoje oczy to mój ulubiony widok 👀✨",
+      "Z Tobą nawet nuda jest fajna 😄",
+      "Jesteś słodsza niż czekolada 🍫",
+      "Myślę o Tobie częściej, niż przyznaję 🙈",
+      "Zawsze wiesz, jak mnie rozbawić 😂",
+      "Masz moje serce. Całe. 💖",
+      "Jesteś po prostu wyjątkowa 🌸",
+      "Każda chwila z Tobą to skarb 💎",
+    ],
+    dates: [
+      ["🍝", "Kolacja we dwoje"],
+      ["🎬", "Kino"],
+      ["🌙", "Spacer pod gwiazdami"],
+      ["🛋️", "Film, koc i przytulanie"],
+      ["🎳", "Kręgle / gry"],
+      ["🧺", "Piknik"],
+    ],
+    snacks: [
+      ["🍦", "Lody"],
+      ["🍕", "Pizza"],
+      ["🧁", "Coś słodkiego"],
+      ["😘", "Buziaki"],
+    ],
+    noTexts: [
+      "Na pewno? 🥺",
+      "Przemyśl to jeszcze raz…",
+      "Będzie mi bardzo smutno 😢",
+      "Ostatnia szansa! 😳",
+      "Ten przycisk chyba nie działa 🤭",
+      "No weź… 🥹",
+      "Serio nie dasz się złapać 😏",
+    ],
+  };
+  /* ============================================ */
+
+  const $ = (id) => document.getElementById(id);
+  document.querySelectorAll(".name").forEach((el) => (el.textContent = CONFIG.name));
+
+  function show(id) {
+    document.querySelectorAll(".screen").forEach((s) => (s.hidden = s.id !== id));
+  }
+
+  // Serduszka w tle
+  const bgEmojis = ["💗", "💕", "💖", "🌸", "💘"];
+  setInterval(() => {
+    const h = document.createElement("div");
+    h.className = "float-heart";
+    h.textContent = bgEmojis[Math.floor(Math.random() * bgEmojis.length)];
+    h.style.left = Math.random() * 100 + "vw";
+    h.style.fontSize = 16 + Math.random() * 26 + "px";
+    h.style.animationDuration = 7 + Math.random() * 6 + "s";
+    h.addEventListener("animationend", () => h.remove());
+    $("floaty").appendChild(h);
+  }, 600);
+
+  // 1 -> 2
+  $("envelope").addEventListener("click", () => show("gameIntro"));
+
+  // ===== Minigra =====
+  const GOAL = 10;
+  let score = 0, spawner = null, pool = [];
+
+  function startGame() {
+    score = 0;
+    pool = [...CONFIG.compliments].sort(() => Math.random() - 0.5);
+    $("score").textContent = 0;
+    $("barFill").style.width = "0%";
+    $("compliment").textContent = "Łap serduszka! 💘";
+    show("game");
+    spawner = setInterval(spawnHeart, 650);
+  }
+
+  function spawnHeart() {
+    const h = document.createElement("div");
+    h.className = "catch";
+    h.textContent = Math.random() < 0.15 ? "💝" : "❤️";
+    h.style.left = 5 + Math.random() * 85 + "vw";
+    h.style.animationDuration = 3.5 + Math.random() * 2.5 + "s";
+    h.addEventListener("animationend", (e) => {
+      if (e.animationName === "rise") h.remove();
+    });
+    h.addEventListener("pointerdown", () => catchHeart(h));
+    $("field").appendChild(h);
+  }
+
+  function catchHeart(h) {
+    if (h.classList.contains("pop")) return;
+    const top = h.getBoundingClientRect().top;
+    h.style.bottom = "auto";
+    h.style.top = top + "px";
+    h.classList.add("pop");
+    setTimeout(() => h.remove(), 350);
+
+    score++;
+    $("score").textContent = score;
+    $("barFill").style.width = (score / GOAL) * 100 + "%";
+    $("compliment").textContent = pool[(score - 1) % pool.length];
+
+    if (score >= GOAL) {
+      clearInterval(spawner);
+      setTimeout(() => {
+        $("field").innerHTML = "";
+        hearts(40);
+        show("question");
+      }, 1400);
+    }
+  }
+  $("startGame").addEventListener("click", startGame);
+
+  // ===== Pytanie z uciekającym "Nie" =====
+  let noCount = 0, yesScale = 1;
+  const noBtn = $("noBtn");
+
+  function runAway(e) {
+    if (e) e.preventDefault();
+    noCount++;
+    const r = noBtn.getBoundingClientRect();
+    if (!noBtn.classList.contains("running")) {
+      noBtn.style.left = r.left + "px";
+      noBtn.style.top = r.top + "px";
+      noBtn.classList.add("running");
+      noBtn.offsetWidth; // wymuś przeliczenie, żeby animacja zadziałała
+    }
+    const maxX = window.innerWidth - r.width - 10;
+    const maxY = window.innerHeight - r.height - 10;
+    noBtn.style.left = Math.max(10, Math.random() * maxX) + "px";
+    noBtn.style.top = Math.max(10, Math.random() * maxY) + "px";
+
+    yesScale = Math.min(yesScale + 0.15, 2.4);
+    $("yesBtn").style.transform = `scale(${yesScale})`;
+    $("noText").textContent = CONFIG.noTexts[(noCount - 1) % CONFIG.noTexts.length];
+    $("qEmoji").textContent = ["🥺", "😢", "😳", "🥹", "😭"][noCount % 5];
+  }
+  noBtn.addEventListener("mouseenter", runAway);
+  noBtn.addEventListener("pointerdown", runAway);
+  noBtn.addEventListener("click", runAway);
+
+  $("yesBtn").addEventListener("click", () => {
+    noBtn.classList.remove("running");
+    noBtn.removeAttribute("style");
+    hearts(80);
+    show("choose");
+  });
+
+  // ===== Wybór randki =====
+  let chosenDate = null, chosenSnack = null;
+
+  function buildOptions(containerId, list, onPick) {
+    const box = $(containerId);
+    box.innerHTML = "";
+    list.forEach(([emoji, label]) => {
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.innerHTML = `<span class="e">${emoji}</span><span>${label}</span>`;
+      b.addEventListener("click", () => {
+        box.querySelectorAll(".opt").forEach((o) => o.classList.remove("selected"));
+        b.classList.add("selected");
+        onPick(`${emoji} ${label}`);
+        hearts(8);
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function updateConfirm() {
+    const ok = chosenDate && chosenSnack;
+    $("confirm").disabled = !ok;
+    $("confirm").style.opacity = ok ? 1 : 0.5;
+  }
+
+  buildOptions("dateOptions", CONFIG.dates, (v) => { chosenDate = v; updateConfirm(); });
+  buildOptions("snackOptions", CONFIG.snacks, (v) => { chosenSnack = v; updateConfirm(); });
+
+  $("confirm").addEventListener("click", () => {
+    $("summary").innerHTML =
+      `Randka: <b>${chosenDate}</b><br>` +
+      `Na deser: <b>${chosenSnack}</b><br>` +
+      `Z kim: <b>${CONFIG.from} 💘</b>`;
+    hearts(150);
+    show("final");
+  });
+
+  $("again").addEventListener("click", () => {
+    chosenDate = chosenSnack = null;
+    noCount = 0; yesScale = 1;
+    $("yesBtn").style.transform = "";
+    $("noText").textContent = "";
+    $("qEmoji").textContent = "🥰";
+    buildOptions("dateOptions", CONFIG.dates, (v) => { chosenDate = v; updateConfirm(); });
+    buildOptions("snackOptions", CONFIG.snacks, (v) => { chosenSnack = v; updateConfirm(); });
+    updateConfirm();
+    show("intro");
+  });
+
+  // ===== Deszcz serduszek =====
+  function hearts(n) {
+    const set = ["💖", "💕", "💗", "💘", "🌸", "✨", "😘"];
+    for (let i = 0; i < n; i++) {
+      setTimeout(() => {
+        const c = document.createElement("div");
+        c.className = "confetti";
+        c.textContent = set[Math.floor(Math.random() * set.length)];
+        c.style.left = Math.random() * 100 + "vw";
+        c.style.fontSize = 18 + Math.random() * 22 + "px";
+        c.style.animationDuration = 2.5 + Math.random() * 2.5 + "s";
+        c.addEventListener("animationend", () => c.remove());
+        document.body.appendChild(c);
+      }, i * 25);
+    }
+  }
+</script>
+</body>
+</html>
