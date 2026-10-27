@@ -2,6 +2,8 @@
 
 Przeglądarkowa gra w blackjacka dla 1–5 graczy przy jednym stole. Bez instalacji — wystarczy otworzyć `index.html` w przeglądarce.
 
+**Wersja w jednym pliku:** `blackjack.html` zawiera całą grę (style i skrypt w środku) — można go wysłać na telefon i otworzyć bez internetu.
+
 ## Funkcje
 
 - **1–5 graczy** z własnymi imionami i awatarami (klik w awatar losuje nowy, przycisk „🎲 Losowe imiona”)
