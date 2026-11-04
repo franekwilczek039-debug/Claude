@@ -1,0 +1,1642 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ultra Kalkulator Naukowy</title>
+<style>
+:root{
+  --bg:#f4f5f9;--panel:#ffffff;--ink:#1a1e29;--muted:#5b6274;--line:#dde1ea;
+  --acc:#3557d6;--acc-ink:#ffffff;--acc-soft:#e7ecff;--ok:#237a37;--ok-soft:#e3f5e8;
+  --err:#b42323;--err-soft:#fdeaea;--code:#eef0f6;--key:#f0f2f8;--key-h:#e2e6f2;
+  --phys:#3557d6;--chem:#0f8a6a;--bio:#a1468f;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1116;--panel:#181b22;--ink:#e7e9ef;--muted:#99a0b2;--line:#2a2f3a;
+    --acc:#7b93ff;--acc-ink:#0f1116;--acc-soft:#212843;--ok:#6fd98a;--ok-soft:#15301d;
+    --err:#ff8a8a;--err-soft:#371818;--code:#20242d;--key:#20242d;--key-h:#2a2f3b;
+    --phys:#7b93ff;--chem:#3fd3a8;--bio:#e48ad2;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1116;--panel:#181b22;--ink:#e7e9ef;--muted:#99a0b2;--line:#2a2f3a;
+  --acc:#7b93ff;--acc-ink:#0f1116;--acc-soft:#212843;--ok:#6fd98a;--ok-soft:#15301d;
+  --err:#ff8a8a;--err-soft:#371818;--code:#20242d;--key:#20242d;--key-h:#2a2f3b;
+  --phys:#7b93ff;--chem:#3fd3a8;--bio:#e48ad2;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:700;font-size:18px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand .logo{width:28px;height:28px;border-radius:8px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;font-size:16px}
+.settings{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.settings select,.settings button{font:inherit;background:var(--key);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+nav{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;gap:4px;overflow-x:auto}
+nav button{font:inherit;font-weight:600;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:8px 12px;cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--ink);border-bottom-color:var(--acc)}
+main{max-width:1200px;margin:0 auto;padding:16px}
+.tab{display:none}.tab.on{display:block}
+h2{margin:4px 0 12px;font-size:20px}
+h3{margin:0 0 4px;font-size:16px}
+.cat{margin:22px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.card.wide{grid-column:1/-1}
+.eq{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:17px;background:var(--code);border-radius:8px;padding:6px 10px;margin:6px 0 10px;overflow-x:auto}
+.note{color:var(--muted);font-size:13px;margin:4px 0 8px}
+.field{display:block;margin:6px 0}
+.field>span{display:block;font-size:13px;color:var(--muted);margin-bottom:2px}
+.row{display:flex;gap:6px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px}
+.row input{flex:1;width:100%}
+.row>*{min-width:0}
+.field>input,.field>select{width:100%}
+.row select{flex:0 0 auto;max-width:46%}
+.unitlbl{flex:0 0 auto;align-self:center;color:var(--muted);font-size:13px;min-width:28px}
+input.solved{background:var(--ok-soft);border-color:var(--ok);font-weight:600}
+textarea{width:100%;resize:vertical;font-family:ui-monospace,Consolas,monospace}
+.btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+button.b{font:inherit;font-weight:600;border-radius:8px;padding:7px 14px;border:1px solid var(--line);background:var(--key);color:var(--ink);cursor:pointer}
+button.b:hover{background:var(--key-h)}
+button.b.p{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+button.b.p:hover{filter:brightness(1.08)}
+.out{margin-top:10px;font-size:14px;overflow-x:auto}
+.out:empty{display:none}
+.out .res{background:var(--ok-soft);border-radius:8px;padding:8px 10px}
+.out .err{background:var(--err-soft);color:var(--err);border-radius:8px;padding:8px 10px}
+.res b{font-size:16px}
+table.t{border-collapse:collapse;width:100%;font-size:14px;margin-top:6px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+table.t th{color:var(--muted);font-weight:600;font-size:13px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.search{width:100%;max-width:420px;margin-bottom:6px}
+.muted{color:var(--muted)}
+.mono{font-family:ui-monospace,Consolas,monospace;word-break:break-all}
+.pill{display:inline-block;font-size:12px;border-radius:99px;padding:1px 8px;background:var(--acc-soft);color:var(--acc);font-weight:600}
+.pill.ex{background:var(--ok-soft);color:var(--ok)}
+/* calculator */
+.calc{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px}
+@media (max-width:860px){.calc{grid-template-columns:minmax(0,1fr)}}
+#expr{width:100%;font:20px/1.3 ui-monospace,Consolas,monospace;padding:10px 12px}
+.display{margin-top:10px;background:var(--code);border-radius:10px;padding:12px;min-height:84px;overflow-x:auto}
+.display .big{font-size:26px;font-weight:700;word-break:break-all}
+.display .line{font-size:14px;color:var(--muted);margin-top:4px;word-break:break-all}
+.keys{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}
+.keys button{font:inherit;font-size:14px;padding:9px 2px;border-radius:8px;border:1px solid var(--line);background:var(--key);color:var(--ink);cursor:pointer;min-width:0}
+.keys button:hover{background:var(--key-h)}
+.keys button.op{color:var(--acc);font-weight:700}
+.keys button.eqk{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:700}
+.hist{max-height:300px;overflow:auto;margin-top:6px}
+.hist div{padding:5px 6px;border-bottom:1px solid var(--line);cursor:pointer;font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all}
+.hist div:hover{background:var(--acc-soft)}
+.punnett{border-collapse:collapse;margin-top:8px;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+.punnett td,.punnett th{border:1px solid var(--line);padding:4px 6px;text-align:center}
+.punnett th{background:var(--acc-soft)}
+.scroll{overflow-x:auto}
+code{background:var(--code);border-radius:4px;padding:0 4px;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+.info p,.info li{max-width:820px}
+footer{max-width:1200px;margin:0 auto;padding:10px 16px 30px;color:var(--muted);font-size:12px}
+@media (max-width:480px){.grid{grid-template-columns:1fr}.keys button{font-size:13px;padding:8px 1px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><span class="logo">∑</span>Ultra Kalkulator Naukowy</div>
+    <div class="settings">
+      <label>Cyfry znaczące
+        <select id="sig">
+          <option>4</option><option>6</option><option>8</option><option selected>10</option><option>12</option><option>15</option>
+        </select>
+      </label>
+      <button id="theme" title="Zmień motyw">◐ Motyw</button>
+    </div>
+  </div>
+  <nav id="nav">
+    <button data-tab="calc" class="on">🧮 Kalkulator</button>
+    <button data-tab="phys">⚛️ Fizyka</button>
+    <button data-tab="chem">🧪 Chemia</button>
+    <button data-tab="bio">🧬 Biologia</button>
+    <button data-tab="units">📏 Jednostki</button>
+    <button data-tab="const">📘 Stałe</button>
+    <button data-tab="info">ℹ️ Jak to działa</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===================== KALKULATOR ===================== -->
+  <section class="tab on" id="tab-calc">
+    <div class="calc">
+      <div class="card">
+        <h3>Kalkulator dokładny</h3>
+        <p class="note">Ułamki i liczby dziesiętne liczone są <b>dokładnie</b> (arytmetyka wymierna, np. <code>0,1+0,2</code> = dokładnie 3/10).
+          Argumenty funkcji rozdzielaj średnikiem: <code>nCr(49;6)</code>. Możesz używać stałych (<code>c</code>, <code>h</code>, <code>NA</code>…) i zmiennych: <code>m = 2,5</code>.</p>
+        <input id="expr" autocomplete="off" spellcheck="false" placeholder="np. (2/3)^10 · 7!  albo  me·c^2/qe">
+        <div class="display" id="disp"><span class="muted">Wpisz wyrażenie i naciśnij Enter.</span></div>
+        <div class="btns">
+          <button class="b" id="angle">Kąty: <b>stopnie</b></button>
+          <button class="b" id="clr">Wyczyść</button>
+        </div>
+        <div class="keys" id="keys"></div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Analiza funkcji f(x)</h3>
+          <p class="note">Miejsca zerowe w przedziale, całka oznaczona (adaptacyjna kwadratura Gaussa–Kronroda) i pochodna w punkcie.</p>
+          <label class="field"><span>f(x) albo równanie (np. <code>x^3 = 2x + 5</code>)</span><input id="fx" value="x^3 - 2x - 5"></label>
+          <div class="row">
+            <label class="field" style="flex:1"><span>od a</span><input id="fa" value="-10"></label>
+            <label class="field" style="flex:1"><span>do b</span><input id="fb" value="10"></label>
+            <label class="field" style="flex:1"><span>punkt x₀</span><input id="fx0" value="2"></label>
+          </div>
+          <div class="btns">
+            <button class="b p" id="roots">Miejsca zerowe</button>
+            <button class="b" id="integ">Całka ∫ₐᵇ</button>
+            <button class="b" id="deriv">f′(x₀), f″(x₀)</button>
+          </div>
+          <div class="out" id="fout"></div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3>Historia</h3>
+          <div class="hist" id="hist"><div class="muted" style="cursor:default">Brak obliczeń.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-phys">
+    <input class="search" placeholder="🔍 Szukaj wzoru (np. energia, Ohm, fala)…" data-for="phys">
+    <p class="note">W każdym wzorze <b>zostaw puste dokładnie jedno pole</b> – zostanie wyliczone. Pola przyjmują też wyrażenia, np. <code>3·10^8</code> albo <code>2/3</code>.</p>
+    <div id="phys"></div>
+  </section>
+  <section class="tab" id="tab-chem">
+    <input class="search" placeholder="🔍 Szukaj (np. pH, masa molowa, równanie)…" data-for="chem">
+    <div id="chem"></div>
+  </section>
+  <section class="tab" id="tab-bio">
+    <input class="search" placeholder="🔍 Szukaj (np. Punnett, DNA, populacja)…" data-for="bio">
+    <div id="bio"></div>
+  </section>
+  <section class="tab" id="tab-units"><div id="units"></div></section>
+  <section class="tab" id="tab-const"><div id="consts"></div></section>
+
+  <section class="tab info" id="tab-info">
+    <div class="card">
+      <h2>Jak liczy ten kalkulator i czego można się po nim spodziewać</h2>
+      <ul>
+        <li><b>Arytmetyka dokładna.</b> Dodawanie, odejmowanie, mnożenie, dzielenie i potęgi całkowite na liczbach wymiernych są liczone bez żadnego zaokrąglenia (wielkie liczby całkowite <code>BigInt</code>). Wynik pokazywany jest jako ułamek i rozwinięcie dziesiętne z okresem, np. 1/7 = 0,(142857). Silnie, symbol Newtona, NWD i NWW też są dokładne dla dowolnie dużych liczb.</li>
+        <li><b>Funkcje przestępne</b> (sin, ln, e<sup>x</sup>, pierwiastki niewymierne…) liczone są w podwójnej precyzji IEEE-754 – ok. 15–16 cyfr znaczących. To dokładność wyższa niż w kalkulatorach szkolnych; do wyświetlenia wynik jest zaokrąglany do wybranej liczby cyfr.</li>
+        <li><b>Bilansowanie równań reakcji</b> i <b>krzyżówki genetyczne</b> są liczone w pełni dokładnie (eliminacja Gaussa na ułamkach, dokładne proporcje).</li>
+        <li><b>pH</b> wyznaczane jest z pełnego bilansu ładunku z uwzględnieniem autodysocjacji wody (bez uproszczeń typu „x ≪ C”), rozwiązywanego numerycznie do granicy precyzji maszynowej.</li>
+        <li><b>Stałe fizyczne</b> to zalecane wartości CODATA 2022; stałe zdefiniowane w SI (c, h, e, k<sub>B</sub>, N<sub>A</sub>) są dokładne. <b>Masy atomowe</b> – standardowe masy atomowe IUPAC (dla pierwiastków bez stabilnych izotopów: liczba masowa najtrwalszego izotopu).</li>
+      </ul>
+      <h3>Uczciwie o „100%”</h3>
+      <p>Żaden program nie poprawi błędnych danych wejściowych ani nie sprawi, że model fizyczny jest dokładniejszy od rzeczywistości. Wzory typu gaz doskonały, Henderson–Hasselbalch czy temperatura topnienia DNA są <b>modelami</b> – kalkulator liczy je bezbłędnie, ale opisują rzeczywistość tylko w przybliżeniu (przy wzorach empirycznych jest to zaznaczone). Wyniki zawsze sprawdzaj pod kątem sensu i jednostek.</p>
+      <h3>Składnia kalkulatora</h3>
+      <table class="t">
+        <tr><th>Zapis</th><th>Znaczenie</th></tr>
+        <tr><td><code>+ - * / ^ !</code>, <code>×</code>, <code>÷</code>, <code>:</code></td><td>działania (potęgowanie prawostronne, <code>2^3^2 = 2^9</code>), silnia</td></tr>
+        <tr><td><code>2,5</code> lub <code>2.5</code>, <code>6,022e23</code></td><td>liczby dziesiętne i notacja naukowa</td></tr>
+        <tr><td><code>2pi</code>, <code>3(4+1)</code></td><td>mnożenie domyślne</td></tr>
+        <tr><td><code>sqrt cbrt root(x;n) exp ln log log(x;b) log2</code></td><td>pierwiastki, logarytmy</td></tr>
+        <tr><td><code>sin cos tan cot asin acos atan atan2(y;x) sinh cosh tanh asinh acosh atanh</code></td><td>trygonometria (stopnie lub radiany – przycisk)</td></tr>
+        <tr><td><code>abs sign floor ceil round(x;n) trunc mod(a;b) gcd lcm fact nCr nPr gamma</code></td><td>funkcje całkowitoliczbowe i specjalne</td></tr>
+        <tr><td><code>min max sum mean median std var hypot</code></td><td>statystyka (dowolna liczba argumentów)</td></tr>
+        <tr><td><code>ans</code>, <code>m = 5</code></td><td>poprzedni wynik, własne zmienne</td></tr>
+      </table>
+    </div>
+  </section>
+</main>
+<footer>Ultra Kalkulator Naukowy · działa w całości w przeglądarce, offline · stałe CODATA 2022, masy atomowe IUPAC</footer>
+
+<script>
+"use strict";
+/* =====================================================================
+   1. DOKŁADNA ARYTMETYKA WYMIERNA (BigInt)
+   ===================================================================== */
+class CalcError extends Error{}
+const err = m => new CalcError(m);
+const BABS = x => x < 0n ? -x : x;
+function bgcd(a,b){a=BABS(a);b=BABS(b);while(b){const t=a%b;a=b;b=t}return a}
+function blen(x){return BABS(x).toString().length}
+
+class Q{
+  constructor(n,d=1n){
+    if(d===0n) throw err('Dzielenie przez zero');
+    if(d<0n){n=-n;d=-d}
+    const g=bgcd(n,d); if(g>1n){n/=g;d/=g}
+    this.n=n;this.d=d;
+  }
+  static of(k){return new Q(BigInt(k))}
+  static parse(str){
+    const m=/^(\d*)(?:[.,](\d*))?(?:[eE]([+-]?\d+))?$/.exec(String(str).trim());
+    if(!m||(m[1]===''&&!m[2])) throw err('Niepoprawna liczba: '+str);
+    const ip=m[1]||'0',fp=m[2]||'',ex=m[3]?parseInt(m[3],10):0;
+    if(Math.abs(ex)>100000) throw err('Wykładnik zbyt duży');
+    let n=BigInt(ip+fp),d=10n**BigInt(fp.length);
+    if(ex>0)n*=10n**BigInt(ex);else if(ex<0)d*=10n**BigInt(-ex);
+    return new Q(n,d);
+  }
+  add(o){return new Q(this.n*o.d+o.n*this.d,this.d*o.d)}
+  sub(o){return new Q(this.n*o.d-o.n*this.d,this.d*o.d)}
+  mul(o){return new Q(this.n*o.n,this.d*o.d)}
+  div(o){if(o.n===0n)throw err('Dzielenie przez zero');return new Q(this.n*o.d,this.d*o.n)}
+  neg(){return new Q(-this.n,this.d)}
+  isInt(){return this.d===1n}
+  sign(){return this.n<0n?-1:this.n>0n?1:0}
+  cmp(o){const x=this.n*o.d-o.n*this.d;return x<0n?-1:x>0n?1:0}
+  powInt(k){ // k: BigInt; zwraca null gdy wynik byłby gigantyczny
+    if(k===0n){if(this.n===0n)throw err('0^0 jest nieokreślone');return Q.of(1)}
+    const size=(blen(this.n)+blen(this.d))*Number(BABS(k));
+    if(size>200000) return null;
+    if(k<0n){if(this.n===0n)throw err('Dzielenie przez zero');return new Q(this.d**(-k),this.n**(-k))}
+    return new Q(this.n**k,this.d**k);
+  }
+  toNumber(){
+    if(this._f!==undefined) return this._f;
+    if(this.n===0n) return this._f=0;
+    const neg=this.n<0n,n=BABS(this.n),d=this.d;
+    const k=n.toString().length-d.toString().length, P=30, sh=P-k;
+    const q= sh>=0 ? n*10n**BigInt(sh)/d : n/(d*10n**BigInt(-sh));
+    const v=parseFloat(q.toString()+'e'+(-sh));
+    return this._f=neg?-v:v;
+  }
+  toDecimal(max=60){ // rozwinięcie dziesiętne z wykrywaniem okresu
+    const neg=this.n<0n,n=BABS(this.n),d=this.d;
+    const ip=n/d;let r=n%d;
+    const sgn=neg?'−':'';
+    if(r===0n) return sgn+groupInt(ip.toString());
+    const digits=[],seen=new Map();let rep=-1;
+    while(r!==0n&&digits.length<max){
+      if(seen.has(r)){rep=seen.get(r);break}
+      seen.set(r,digits.length);r*=10n;digits.push((r/d).toString());r%=d;
+    }
+    let s;
+    if(rep>=0) s=digits.slice(0,rep).join('')+'('+digits.slice(rep).join('')+')';
+    else s=digits.join('')+(r!==0n?'…':'');
+    return sgn+groupInt(ip.toString())+','+s;
+  }
+  toString(){return this.d===1n?this.n.toString():this.n+'/'+this.d}
+}
+function groupInt(s){ if(s.length<=4) return s; return s.replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
+function iroot(n,k){ // floor(n^(1/k)), n>=0 BigInt
+  if(n<2n) return n;
+  const kb=BigInt(k);
+  let x=1n<<BigInt(Math.ceil(n.toString(2).length/k));
+  for(;;){const y=((kb-1n)*x+n/(x**(kb-1n)))/kb; if(y>=x) return x; x=y}
+}
+function exactRoot(q,k){ // dokładny pierwiastek k-tego stopnia z wymiernej albo null
+  if(k<1||k>64) return null;
+  let neg=false,n=q.n;
+  if(n<0n){if(k%2===0)return null;neg=true;n=-n}
+  const a=iroot(n,k),b=iroot(q.d,k);
+  if(a**BigInt(k)===n&&b**BigInt(k)===q.d) return new Q(neg?-a:a,b);
+  return null;
+}
+const isQ = v => v instanceof Q;
+const toNum = v => isQ(v)?v.toNumber():v;
+
+/* =====================================================================
+   2. STAŁE (CODATA 2022) I MASY ATOMOWE (IUPAC)
+   ===================================================================== */
+const QP=s=>Q.parse(s);
+const K={};
+K.c=QP('299792458');K.h=QP('6.62607015e-34');K.qe=QP('1.602176634e-19');
+K.kB=QP('1.380649e-23');K.NA=QP('6.02214076e23');K.R=K.NA.mul(K.kB);K.F=K.NA.mul(K.qe);
+K.g=QP('9.80665');K.atm=QP('101325');K.T0=QP('273.15');
+K.G=QP('6.67430e-11');K.me=QP('9.1093837139e-31');K.mp=QP('1.67262192595e-27');K.mn=QP('1.67492750056e-27');
+K.u=QP('1.66053906892e-27');K.eps0=QP('8.8541878188e-12');K.mu0=QP('1.25663706127e-6');
+K.alpha=QP('7.2973525643e-3');K.Rinf=QP('10973731.568157');K.a0=QP('5.29177210544e-11');
+K.Kw=QP('1e-14');K.Vm=K.R.mul(K.T0).div(K.atm);K.bW=QP('2.897771955e-3');
+const PI=Math.PI;
+const CONST_FLOAT={
+  hbar:K.h.toNumber()/(2*PI),
+  sigma:2*Math.pow(PI,5)*Math.pow(K.kB.toNumber(),4)/(15*Math.pow(K.h.toNumber(),3)*Math.pow(K.c.toNumber(),2)),
+  ke:1/(4*PI*K.eps0.toNumber()),
+};
+const CONSTV=Object.assign({pi:PI,e:Math.E,tau:2*PI,phi:(1+Math.sqrt(5))/2},K,CONST_FLOAT);
+const C={};for(const k in CONSTV) C[k]=toNum(CONSTV[k]); // wersje zmiennoprzecinkowe do wzorów
+
+const CONST_TABLE=[
+ ['c','Prędkość światła w próżni','c','m/s',true],
+ ['h','Stała Plancka','h','J·s',true],
+ ['hbar','Zredukowana stała Plancka h/2π','ħ','J·s',true],
+ ['qe','Ładunek elementarny','e','C',true],
+ ['kB','Stała Boltzmanna','k<sub>B</sub>','J/K',true],
+ ['NA','Stała Avogadra','N<sub>A</sub>','mol⁻¹',true],
+ ['R','Stała gazowa N<sub>A</sub>·k<sub>B</sub>','R','J/(mol·K)',true],
+ ['F','Stała Faradaya N<sub>A</sub>·e','F','C/mol',true],
+ ['sigma','Stała Stefana–Boltzmanna','σ','W/(m²·K⁴)',true],
+ ['bW','Stała Wiena','b','m·K',true],
+ ['G','Stała grawitacji','G','m³/(kg·s²)',false,'1,5·10⁻¹⁵'],
+ ['me','Masa elektronu','m<sub>e</sub>','kg',false,'2,8·10⁻⁴⁰'],
+ ['mp','Masa protonu','m<sub>p</sub>','kg',false,'5,2·10⁻³⁷'],
+ ['mn','Masa neutronu','m<sub>n</sub>','kg',false,'8,5·10⁻³⁷'],
+ ['u','Jednostka masy atomowej','u','kg',false,'5,2·10⁻³⁷'],
+ ['eps0','Przenikalność elektryczna próżni','ε<sub>0</sub>','F/m',false,'1,4·10⁻²¹'],
+ ['mu0','Przenikalność magnetyczna próżni','μ<sub>0</sub>','N/A²',false,'2,0·10⁻¹⁶'],
+ ['ke','Stała Coulomba 1/(4πε₀)','k','N·m²/C²',false,'1,4'],
+ ['alpha','Stała struktury subtelnej','α','—',false,'1,1·10⁻¹²'],
+ ['Rinf','Stała Rydberga','R<sub>∞</sub>','m⁻¹',false,'1,2·10⁻⁵'],
+ ['a0','Promień Bohra','a<sub>0</sub>','m',false,'8,2·10⁻²¹'],
+ ['g','Normalne przyspieszenie ziemskie','g<sub>n</sub>','m/s²',true],
+ ['atm','Atmosfera standardowa','atm','Pa',true],
+ ['T0','Temperatura 0 °C','T<sub>0</sub>','K',true],
+ ['Vm','Objętość molowa gazu (0 °C, 1 atm)','V<sub>m</sub>','m³/mol',true],
+ ['Kw','Iloczyn jonowy wody (25 °C, konwencja)','K<sub>w</sub>','—',false,'umowne'],
+ ['pi','Liczba π','π','—',true],['e','Liczba Eulera','e','—',true],['phi','Złota liczba','φ','—',true],
+];
+
+const ATOMIC={H:'1.008',He:'4.002602',Li:'6.94',Be:'9.0121831',B:'10.81',C:'12.011',N:'14.007',O:'15.999',F:'18.998403163',Ne:'20.1797',
+Na:'22.98976928',Mg:'24.305',Al:'26.9815385',Si:'28.085',P:'30.973761998',S:'32.06',Cl:'35.45',Ar:'39.948',K:'39.0983',Ca:'40.078',
+Sc:'44.955908',Ti:'47.867',V:'50.9415',Cr:'51.9961',Mn:'54.938044',Fe:'55.845',Co:'58.933194',Ni:'58.6934',Cu:'63.546',Zn:'65.38',
+Ga:'69.723',Ge:'72.630',As:'74.921595',Se:'78.971',Br:'79.904',Kr:'83.798',Rb:'85.4678',Sr:'87.62',Y:'88.90584',Zr:'91.224',
+Nb:'92.90637',Mo:'95.95',Tc:'97',Ru:'101.07',Rh:'102.90550',Pd:'106.42',Ag:'107.8682',Cd:'112.414',In:'114.818',Sn:'118.710',
+Sb:'121.760',Te:'127.60',I:'126.90447',Xe:'131.293',Cs:'132.90545196',Ba:'137.327',La:'138.90547',Ce:'140.116',Pr:'140.90766',Nd:'144.242',
+Pm:'145',Sm:'150.36',Eu:'151.964',Gd:'157.25',Tb:'158.92535',Dy:'162.500',Ho:'164.93033',Er:'167.259',Tm:'168.93422',Yb:'173.045',
+Lu:'174.9668',Hf:'178.49',Ta:'180.94788',W:'183.84',Re:'186.207',Os:'190.23',Ir:'192.217',Pt:'195.084',Au:'196.966569',Hg:'200.592',
+Tl:'204.38',Pb:'207.2',Bi:'208.98040',Po:'209',At:'210',Rn:'222',Fr:'223',Ra:'226',Ac:'227',Th:'232.0377',Pa:'231.03588',U:'238.02891',
+Np:'237',Pu:'244',Am:'243',Cm:'247',Bk:'247',Cf:'251',Es:'252',Fm:'257',Md:'258',No:'259',Lr:'266',Rf:'267',Db:'268',Sg:'269',
+Bh:'270',Hs:'269',Mt:'278',Ds:'281',Rg:'282',Cn:'285',Nh:'286',Fl:'289',Mc:'290',Lv:'293',Ts:'294',Og:'294'};
+const ATOMIC_Q={};for(const k in ATOMIC) ATOMIC_Q[k]=QP(ATOMIC[k]);
+
+/* =====================================================================
+   3. PARSER I EWALUATOR WYRAŻEŃ
+   ===================================================================== */
+let DEG=true;
+const VARS=new Map();
+function normalize(s){
+  return s.replace(/[×·∙⋅]/g,'*').replace(/[÷:]/g,'/').replace(/[−–]/g,'-')
+    .replace(/√/g,'sqrt').replace(/π/g,'pi').replace(/ħ/g,'hbar').replace(/[μµ]/g,'mu').replace(/ε/g,'eps')
+    .replace(/σ/g,'sigma').replace(/τ/g,'tau').replace(/φ/g,'phi').replace(/α/g,'alpha')
+    .replace(/²/g,'^2').replace(/³/g,'^3').replace(/\*\*/g,'^');
+}
+function tokenize(src){
+  const s=normalize(src);const out=[];let i=0;
+  while(i<s.length){
+    const ch=s[i];
+    if(/\s/.test(ch)){i++;continue}
+    const num=/^(\d+(?:[.,]\d+)?|\d+[.]|[.,]\d+)(?:[eE][+-]?\d+)?/.exec(s.slice(i));
+    if(num&&/[\d.,]/.test(ch)&&!(ch===','&&!/\d/.test(s[i+1]||''))){out.push({t:'num',v:Q.parse(num[0].replace(/\.$/,''))});i+=num[0].length;continue}
+    const id=/^[A-Za-z_][A-Za-z_0-9]*/.exec(s.slice(i));
+    if(id){out.push({t:'id',v:id[0]});i+=id[0].length;continue}
+    if('+-*/^()!;,='.includes(ch)){out.push({t:'op',v:ch});i++;continue}
+    throw err('Nieznany znak: „'+ch+'”');
+  }
+  return out;
+}
+function parse(src){
+  const toks=tokenize(src);let i=0;
+  const isOp=v=>toks[i]&&toks[i].t==='op'&&toks[i].v===v;
+  const expect=v=>{if(!isOp(v))throw err('Brakuje „'+v+'”');i++};
+  function expr(){let a=term();while(isOp('+')||isOp('-')){const op=toks[i++].v;a={k:'bin',op,a,b:term()}}return a}
+  function term(){let a=unary();for(;;){
+    if(isOp('*')||isOp('/')){const op=toks[i++].v;a={k:'bin',op,a,b:unary()}}
+    else if(toks[i]&&(toks[i].t==='num'||toks[i].t==='id'||isOp('('))){a={k:'bin',op:'*',a,b:power()}}
+    else break}return a}
+  function unary(){if(isOp('-')){i++;return{k:'neg',a:unary()}}if(isOp('+')){i++;return unary()}return power()}
+  function power(){const a=postfix();if(isOp('^')){i++;return{k:'bin',op:'^',a,b:unary()}}return a}
+  function postfix(){let a=primary();while(isOp('!')){i++;a={k:'fact',a}}return a}
+  function primary(){
+    const t=toks[i++];
+    if(!t) throw err('Niekompletne wyrażenie');
+    if(t.t==='num') return{k:'num',v:t.v};
+    if(t.t==='id'){
+      if(FUNCS[t.v]){
+        if(!isOp('(')) throw err('Funkcja „'+t.v+'” wymaga nawiasów, np. '+t.v+'(2)');
+        i++;const args=[];
+        if(!isOp(')')){args.push(expr());while(isOp(';')||isOp(',')){i++;args.push(expr())}}
+        expect(')');return{k:'call',f:t.v,args};
+      }
+      return{k:'var',n:t.v};
+    }
+    if(t.v==='('){const e=expr();expect(')');return e}
+    throw err('Nieoczekiwany symbol „'+t.v+'”');
+  }
+  const e=expr();
+  if(i<toks.length) throw err('Nieoczekiwany symbol „'+toks[i].v+'”');
+  return e;
+}
+function evalAst(node,env){
+  switch(node.k){
+    case'num':return node.v;
+    case'var':{
+      if(env&&node.n in env) return env[node.n];
+      if(VARS.has(node.n)) return VARS.get(node.n);
+      if(Object.prototype.hasOwnProperty.call(CONSTV,node.n)) return CONSTV[node.n];
+      throw err('Nieznana zmienna lub stała: „'+node.n+'”');
+    }
+    case'neg':{const a=evalAst(node.a,env);return isQ(a)?a.neg():-a}
+    case'bin':return binop(node.op,evalAst(node.a,env),evalAst(node.b,env));
+    case'fact':return factorial(evalAst(node.a,env));
+    case'call':{
+      const fn=FUNCS[node.f];const args=node.args.map(a=>evalAst(a,env));
+      if(fn.n!==undefined&&!(Array.isArray(fn.n)?fn.n.includes(args.length):args.length===fn.n))
+        throw err('Funkcja '+node.f+' przyjmuje '+(Array.isArray(fn.n)?fn.n.join(' lub '):fn.n)+' argument(y)');
+      if(fn.n===undefined&&args.length===0) throw err('Funkcja '+node.f+' wymaga argumentów');
+      return fn.f(...args);
+    }
+  }
+}
+function chk(x){
+  if(typeof x==='number'){
+    if(Number.isNaN(x)) throw err('Wynik nieokreślony lub zespolony (poza dziedziną)');
+  }
+  return x;
+}
+function realPow(x,y){
+  if(x<0&&!Number.isInteger(y)){
+    const r=1/y,rr=Math.round(r);
+    if(Math.abs(r-rr)<1e-9&&Math.abs(rr)%2===1) return -Math.pow(-x,y);
+    throw err('Potęga liczby ujemnej o wykładniku niecałkowitym – wynik zespolony');
+  }
+  return Math.pow(x,y);
+}
+function binop(op,a,b){
+  if(isQ(a)&&isQ(b)){
+    switch(op){
+      case'+':return a.add(b);case'-':return a.sub(b);case'*':return a.mul(b);case'/':return a.div(b);
+      case'^':{
+        if(b.isInt()){const r=a.powInt(b.n);if(r)return r}
+        else if(b.d<=64n){const root=exactRoot(a,Number(b.d));if(root){const r=root.powInt(b.n);if(r)return r}}
+        return chk(realPow(a.toNumber(),b.toNumber()));
+      }
+    }
+  }
+  const x=toNum(a),y=toNum(b);
+  switch(op){
+    case'+':return x+y;case'-':return x-y;case'*':return x*y;
+    case'/':if(y===0)throw err('Dzielenie przez zero');return x/y;
+    case'^':return chk(realPow(x,y));
+  }
+}
+function factorial(v){
+  if(isQ(v)&&v.isInt()){
+    if(v.n<0n) throw err('Silnia liczby ujemnej jest nieokreślona');
+    if(v.n>20000n) throw err('Za duża silnia (maks. 20000!)');
+    let r=1n;for(let i=2n;i<=v.n;i++)r*=i;return new Q(r);
+  }
+  const x=toNum(v);
+  if(Number.isInteger(x)&&x<0) throw err('Silnia liczby ujemnej całkowitej jest nieokreślona');
+  return gammaFn(x+1);
+}
+const LZ=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+function gammaFn(z){
+  if(z<0.5) return PI/(Math.sin(PI*z)*gammaFn(1-z));
+  z-=1;let x=LZ[0];for(let i=1;i<9;i++)x+=LZ[i]/(z+i);
+  const t=z+7.5;return Math.sqrt(2*PI)*Math.pow(t,z+0.5)*Math.exp(-t)*x;
+}
+function lnGamma(z){
+  if(z<0.5) return Math.log(PI/Math.abs(Math.sin(PI*z)))-lnGamma(1-z);
+  z-=1;let x=LZ[0];for(let i=1;i<9;i++)x+=LZ[i]/(z+i);
+  const t=z+7.5;return 0.5*Math.log(2*PI)+(z+0.5)*Math.log(t)-t+Math.log(x);
+}
+// trygonometria: dokładne wartości wymierne dla wielokrotności 30° / 45°
+const HALF=new Q(1n,2n);
+function sinDegExact(q){
+  const t=new Q(((q.n%(360n*q.d))+360n*q.d)%(360n*q.d),q.d);
+  if(!t.isInt()) return null;const a=Number(t.n);
+  const tab={0:Q.of(0),30:HALF,90:Q.of(1),150:HALF,180:Q.of(0),210:HALF.neg(),270:Q.of(-1),330:HALF.neg()};
+  return tab[a]||null;
+}
+const snap=(r,x)=>Math.abs(r)<1e-15*Math.max(1,Math.abs(x))?0:r;
+function trig(kind,v){
+  if(DEG&&isQ(v)){
+    if(kind==='sin'){const e=sinDegExact(v);if(e)return e}
+    if(kind==='cos'){const e=sinDegExact(v.add(Q.of(90)));if(e)return e}
+    if(kind==='tan'){
+      const s=sinDegExact(v),c=sinDegExact(v.add(Q.of(90)));
+      if(s&&c){if(c.n===0n)throw err('tan nieokreślony (cos = 0)');return s.div(c)}
+      const t=new Q(((v.n%(180n*v.d))+180n*v.d)%(180n*v.d),v.d);
+      if(t.isInt()&&t.n===45n)return Q.of(1);if(t.isInt()&&t.n===135n)return Q.of(-1);
+    }
+  }
+  let x=toNum(v);const xr=DEG?x*PI/180:x;
+  if(kind==='sin') return snap(Math.sin(xr),xr);
+  if(kind==='cos') return snap(Math.cos(xr),xr);
+  const c=snap(Math.cos(xr),xr);if(c===0)throw err('tan nieokreślony (cos = 0)');
+  return snap(Math.sin(xr),xr)/c;
+}
+const outAng=r=>DEG?r*180/PI:r;
+const n1=f=>({n:1,f:v=>chk(f(toNum(v)))});
+function needInt(v,name){if(!(isQ(v)&&v.isInt()))throw err(name+' wymaga liczb całkowitych');return v.n}
+function nums(args){const a=args.flatMap(v=>v);if(!a.length)throw err('Brak argumentów');return a}
+function sumQ(a){return a.reduce((s,v)=>binop('+',s,v),Q.of(0))}
+function sqrtF(v){
+  if(isQ(v)){if(v.sign()<0)throw err('Pierwiastek z liczby ujemnej – wynik zespolony');const r=exactRoot(v,2);if(r)return r}
+  const x=toNum(v);if(x<0)throw err('Pierwiastek z liczby ujemnej – wynik zespolony');return Math.sqrt(x);
+}
+const FUNCS={
+  sqrt:{n:1,f:sqrtF},
+  cbrt:{n:1,f:v=>{if(isQ(v)){const r=exactRoot(v,3);if(r)return r}return Math.cbrt(toNum(v))}},
+  root:{n:2,f:(v,k)=>{const kk=Number(needInt(k,'root'));if(kk<1)throw err('Stopień pierwiastka ≥ 1');
+    if(isQ(v)){const r=exactRoot(v,kk);if(r)return r}return chk(realPow(toNum(v),1/kk))}},
+  exp:{n:1,f:v=>(isQ(v)&&v.n===0n)?Q.of(1):Math.exp(toNum(v))},
+  ln:{n:1,f:v=>{const x=toNum(v);if(x<=0)throw err('Logarytm z liczby ≤ 0');if(isQ(v)&&v.n===1n&&v.d===1n)return Q.of(0);return Math.log(x)}},
+  log:{n:[1,2],f:(v,b)=>{const x=toNum(v);if(x<=0)throw err('Logarytm z liczby ≤ 0');
+    if(b===undefined){const e=exactLog(v,10n);if(e)return e;return Math.log10(x)}
+    const bb=toNum(b);if(bb<=0||bb===1)throw err('Niepoprawna podstawa logarytmu');
+    if(isQ(b)&&b.isInt()&&b.n>1n){const e=exactLog(v,b.n);if(e)return e}
+    return Math.log(x)/Math.log(bb)}},
+  log2:{n:1,f:v=>{const x=toNum(v);if(x<=0)throw err('Logarytm z liczby ≤ 0');const e=exactLog(v,2n);if(e)return e;return Math.log2(x)}},
+  sin:{n:1,f:v=>trig('sin',v)},cos:{n:1,f:v=>trig('cos',v)},tan:{n:1,f:v=>trig('tan',v)},
+  cot:{n:1,f:v=>{const t=trig('tan',v);if(toNum(t)===0)throw err('cot nieokreślony');return binop('/',Q.of(1),t)}},
+  asin:n1(x=>{if(x<-1||x>1)throw err('asin: argument spoza [−1, 1]');return outAng(Math.asin(x))}),
+  acos:n1(x=>{if(x<-1||x>1)throw err('acos: argument spoza [−1, 1]');return outAng(Math.acos(x))}),
+  atan:n1(x=>outAng(Math.atan(x))),
+  atan2:{n:2,f:(y,x)=>outAng(Math.atan2(toNum(y),toNum(x)))},
+  sinh:n1(Math.sinh),cosh:n1(Math.cosh),tanh:n1(Math.tanh),asinh:n1(Math.asinh),
+  acosh:n1(x=>{if(x<1)throw err('acosh: argument < 1');return Math.acosh(x)}),
+  atanh:n1(x=>{if(x<=-1||x>=1)throw err('atanh: argument spoza (−1, 1)');return Math.atanh(x)}),
+  abs:{n:1,f:v=>isQ(v)?(v.sign()<0?v.neg():v):Math.abs(v)},
+  sign:{n:1,f:v=>Q.of(isQ(v)?v.sign():Math.sign(v))},
+  floor:{n:1,f:v=>isQ(v)?new Q(qFloor(v)):Math.floor(v)},
+  ceil:{n:1,f:v=>isQ(v)?new Q(-qFloor(v.neg())):Math.ceil(v)},
+  trunc:{n:1,f:v=>isQ(v)?new Q(v.n/v.d):Math.trunc(v)},
+  round:{n:[1,2],f:(v,k)=>{const kk=k===undefined?0n:needInt(k,'round');
+    if(isQ(v)){const sc0=new Q(10n**BABS(kk));const sc=kk>=0n?v.mul(sc0):v.div(sc0);
+      const r=new Q(sc.sign()>=0?qFloor(sc.add(HALF)):-qFloor(sc.neg().add(HALF)));
+      return kk>=0n?r.div(sc0):r.mul(sc0)}
+    const s=Math.pow(10,Number(kk));return Math.sign(v)*Math.round(Math.abs(v)*s)/s}},
+  mod:{n:2,f:(a,b)=>{if(isQ(a)&&isQ(b)){if(b.n===0n)throw err('mod przez zero');return a.sub(b.mul(new Q(qFloor(a.div(b)))))}
+    const x=toNum(a),y=toNum(b);if(y===0)throw err('mod przez zero');return x-y*Math.floor(x/y)}},
+  gcd:{f:(...a)=>new Q(a.map(v=>needInt(v,'gcd')).reduce((x,y)=>bgcd(x,y)))},
+  lcm:{f:(...a)=>new Q(a.map(v=>BABS(needInt(v,'lcm'))).reduce((x,y)=>x===0n||y===0n?0n:x/bgcd(x,y)*y))},
+  fact:{n:1,f:factorial},
+  gamma:{n:1,f:v=>{if(isQ(v)&&v.isInt()&&v.n>0n)return factorial(new Q(v.n-1n));const x=toNum(v);
+    if(Number.isInteger(x)&&x<=0)throw err('Γ nieokreślona dla liczb całkowitych ≤ 0');return gammaFn(x)}},
+  nCr:{n:2,f:(a,b)=>{const n=needInt(a,'nCr'),k=needInt(b,'nCr');if(k<0n||n<0n||k>n)return Q.of(0);
+    let kk=k>n-k?n-k:k,r=1n;for(let i=1n;i<=kk;i++)r=r*(n-kk+i)/i;return new Q(r)}},
+  nPr:{n:2,f:(a,b)=>{const n=needInt(a,'nPr'),k=needInt(b,'nPr');if(k<0n||n<0n||k>n)return Q.of(0);
+    let r=1n;for(let i=0n;i<k;i++)r*=n-i;return new Q(r)}},
+  min:{f:(...a)=>a.reduce((x,y)=>toNum(y)<toNum(x)?y:x)},
+  max:{f:(...a)=>a.reduce((x,y)=>toNum(y)>toNum(x)?y:x)},
+  sum:{f:(...a)=>sumQ(a)},
+  mean:{f:(...a)=>binop('/',sumQ(a),Q.of(a.length))},
+  avg:{f:(...a)=>binop('/',sumQ(a),Q.of(a.length))},
+  median:{f:(...a)=>{const s=[...a].sort((x,y)=>toNum(x)-toNum(y));const m=s.length>>1;
+    return s.length%2?s[m]:binop('/',binop('+',s[m-1],s[m]),Q.of(2))}},
+  var:{f:(...a)=>sampleVar(a)},
+  std:{f:(...a)=>sqrtF(sampleVar(a))},
+  hypot:{f:(...a)=>sqrtF(sumQ(a.map(v=>binop('*',v,v))))},
+  deg:{n:1,f:v=>toNum(v)*180/PI},
+  rad:{n:1,f:v=>toNum(v)*PI/180},
+};
+function sampleVar(a){if(a.length<2)throw err('Wariancja wymaga ≥ 2 wartości');
+  const m=binop('/',sumQ(a),Q.of(a.length));
+  return binop('/',sumQ(a.map(v=>{const d=binop('-',v,m);return binop('*',d,d)})),Q.of(a.length-1))}
+function qFloor(q){let r=q.n/q.d;if(q.n<0n&&r*q.d!==q.n)r-=1n;return r}
+function exactLog(v,base){ // log_base(v) dokładnie, gdy v jest całkowitą potęgą podstawy
+  if(!isQ(v)||v.sign()<=0) return null;
+  const test=(n)=>{let k=0n;if(n<1n)return null;while(n>1n){if(n%base)return null;n/=base;k++}return k};
+  if(v.d===1n){const k=test(v.n);return k===null?null:new Q(k)}
+  if(v.n===1n){const k=test(v.d);return k===null?null:new Q(-k)}
+  return null;
+}
+function evaluate(src,env){
+  src=src.trim();if(!src) throw err('Puste wyrażenie');
+  return chk(evalAst(parse(src),env));
+}
+// odczyt liczby z pola (z obsługą wyrażeń)
+function readNum(str){const v=evaluate(str);const x=toNum(v);if(!Number.isFinite(x))throw err('Wartość nieskończona');return x}
+
+/* =====================================================================
+   4. FORMATOWANIE
+   ===================================================================== */
+let SIG=10;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function trimZ(s){return s.includes('.')?s.replace(/0+$/,'').replace(/\.$/,''):s}
+function qSci(v,sig){
+  const neg=v.n<0n,n=BABS(v.n),d=v.d;let k=n.toString().length-d.toString().length;
+  const dig=(kk)=>{const sh=sig-kk;return sh>=0?n*10n**BigInt(sh)/d:n/(d*10n**BigInt(-sh))};
+  let q=dig(k);while(q.toString().length>sig+1){k++;q=dig(k)}while(q.toString().length<sig+1){k--;q=dig(k)}
+  q=(q+5n)/10n;if(q.toString().length>sig){q/=10n;k++}
+  const s=q.toString();
+  return (neg?'−':'')+trimZ(s[0]+'.'+s.slice(1)).replace('.',',')+' × 10<sup>'+String(k).replace('-','−')+'</sup>';
+}
+function fmt(x,sig=SIG){
+  if(isQ(x)){const f=x.toNumber();if(!Number.isFinite(f)||(f===0&&x.n!==0n))return qSci(x,sig)}
+  x=toNum(x);
+  if(!Number.isFinite(x)) return Number.isNaN(x)?'NaN':(x>0?'∞':'−∞');
+  if(x===0) return '0';
+  const a=Math.abs(x);
+  if(a>=1e-4&&a<1e15){const s=x.toPrecision(sig);if(!s.includes('e'))return trimZ(s).replace('-','−').replace('.',',')}
+  let [m,e]=x.toExponential(sig-1).split('e');
+  return trimZ(m).replace('-','−').replace('.',',')+' × 10<sup>'+String(+e).replace('-','−')+'</sup>';
+}
+function toInput(x){ // zapis nadający się do ponownego wpisania
+  const s=String(parseFloat(x.toPrecision(15)));
+  return s.replace('.',',');
+}
+function fracStr(n,d){const g=gcdN(n,d);return (n/g)+'/'+(d/g)}
+function gcdN(a,b){a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a}
+const pct=x=>fmt(x*100,Math.min(SIG,8))+' %';
+
+/* =====================================================================
+   5. JEDNOSTKI
+   ===================================================================== */
+const U=(sym,f,o=0)=>({sym,f,o});
+const UNITS={
+ length:{name:'Długość',u:[U('m',1),U('km',1e3),U('dm',0.1),U('cm',1e-2),U('mm',1e-3),U('µm',1e-6),U('nm',1e-9),U('pm',1e-12),U('Å',1e-10),U('in',0.0254),U('ft',0.3048),U('yd',0.9144),U('mila',1609.344),U('mila morska',1852),U('au',149597870700),U('rok św.',9460730472580800),U('pc',3.0856775814913673e16)]},
+ mass:{name:'Masa',u:[U('kg',1),U('g',1e-3),U('mg',1e-6),U('µg',1e-9),U('t',1e3),U('u (Da)',C.u),U('lb',0.45359237),U('oz',0.028349523125)]},
+ time:{name:'Czas',u:[U('s',1),U('ms',1e-3),U('µs',1e-6),U('ns',1e-9),U('min',60),U('h',3600),U('doba',86400),U('tydzień',604800),U('rok',31557600)]},
+ temp:{name:'Temperatura',u:[U('K',1),U('°C',1,273.15),U('°F',5/9,459.67)]},
+ dtemp:{name:'Różnica temperatur',u:[U('K',1),U('°C',1),U('°F',5/9)]},
+ speed:{name:'Prędkość',u:[U('m/s',1),U('km/h',1/3.6),U('cm/s',0.01),U('mph',0.44704),U('węzeł',1852/3600),U('c',C.c)]},
+ acc:{name:'Przyspieszenie',u:[U('m/s²',1),U('cm/s²',0.01),U('g₀',C.g)]},
+ force:{name:'Siła',u:[U('N',1),U('kN',1e3),U('MN',1e6),U('mN',1e-3),U('µN',1e-6),U('dyn',1e-5),U('kG',C.g),U('lbf',4.4482216152605)]},
+ energy:{name:'Energia',u:[U('J',1),U('kJ',1e3),U('MJ',1e6),U('GJ',1e9),U('mJ',1e-3),U('eV',C.qe),U('keV',C.qe*1e3),U('MeV',C.qe*1e6),U('GeV',C.qe*1e9),U('cal',4.184),U('kcal',4184),U('Wh',3600),U('kWh',3.6e6),U('erg',1e-7)]},
+ power:{name:'Moc',u:[U('W',1),U('mW',1e-3),U('kW',1e3),U('MW',1e6),U('GW',1e9),U('KM',735.49875),U('hp',745.69987158227022)]},
+ pressure:{name:'Ciśnienie',u:[U('Pa',1),U('hPa',100),U('kPa',1e3),U('MPa',1e6),U('GPa',1e9),U('bar',1e5),U('mbar',100),U('atm',101325),U('mmHg',133.322387415),U('Tr',101325/760),U('psi',6894.757293168361)]},
+ volume:{name:'Objętość',u:[U('m³',1),U('dm³',1e-3),U('L',1e-3),U('mL',1e-6),U('cm³',1e-6),U('mm³',1e-9),U('µL',1e-9),U('km³',1e9),U('gal (US)',3.785411784e-3)]},
+ area:{name:'Pole powierzchni',u:[U('m²',1),U('mm²',1e-6),U('cm²',1e-4),U('dm²',1e-2),U('a',100),U('ha',1e4),U('km²',1e6)]},
+ amount:{name:'Liczność materii',u:[U('mol',1),U('mmol',1e-3),U('µmol',1e-6),U('nmol',1e-9),U('kmol',1e3)]},
+ conc:{name:'Stężenie molowe',u:[U('mol/dm³',1000),U('mmol/dm³',1),U('µmol/dm³',1e-3),U('nmol/dm³',1e-6),U('mol/m³',1)]},
+ charge:{name:'Ładunek',u:[U('C',1),U('mC',1e-3),U('µC',1e-6),U('nC',1e-9),U('pC',1e-12),U('Ah',3600),U('mAh',3.6),U('e',C.qe)]},
+ current:{name:'Natężenie prądu',u:[U('A',1),U('mA',1e-3),U('µA',1e-6),U('nA',1e-9),U('kA',1e3)]},
+ voltage:{name:'Napięcie',u:[U('V',1),U('mV',1e-3),U('µV',1e-6),U('kV',1e3),U('MV',1e6)]},
+ resistance:{name:'Opór',u:[U('Ω',1),U('mΩ',1e-3),U('kΩ',1e3),U('MΩ',1e6)]},
+ capacitance:{name:'Pojemność',u:[U('F',1),U('mF',1e-3),U('µF',1e-6),U('nF',1e-9),U('pF',1e-12)]},
+ frequency:{name:'Częstotliwość',u:[U('Hz',1),U('kHz',1e3),U('MHz',1e6),U('GHz',1e9),U('THz',1e12),U('PHz',1e15),U('obr/min',1/60)]},
+ density:{name:'Gęstość',u:[U('kg/m³',1),U('g/cm³',1000),U('g/dm³',1),U('kg/dm³',1000),U('g/mL',1000)]},
+ angle:{name:'Kąt',u:[U('°',PI/180),U('rad',1),U('′',PI/10800),U('″',PI/648000)]},
+ molarMass:{name:'Masa molowa',u:[U('g/mol',1e-3),U('kg/mol',1)]},
+ specHeat:{name:'Ciepło właściwe',u:[U('J/(kg·K)',1),U('J/(g·K)',1000),U('kJ/(kg·K)',1000),U('cal/(g·K)',4184)]},
+ molarE:{name:'Energia molowa',u:[U('kJ/mol',1000),U('J/mol',1),U('kcal/mol',4184),U('eV/cząstkę',C.F)]},
+ molarS:{name:'Entropia molowa',u:[U('J/(mol·K)',1),U('kJ/(mol·K)',1000),U('cal/(mol·K)',4.184)]},
+ momentum:{name:'Pęd',u:[U('kg·m/s',1),U('g·cm/s',1e-5)]},
+ springK:{name:'Współczynnik sprężystości',u:[U('N/m',1),U('N/cm',100),U('kN/m',1000)]},
+ rate1:{name:'Stała szybkości (1. rzędu)',u:[U('1/s',1),U('1/min',1/60),U('1/h',1/3600),U('1/doba',1/86400),U('1/rok',1/31557600)]},
+};
+const NOUNIT={one:'',any:'(dowolna)',pct:'%'};
+
+/* =====================================================================
+   6. UI: POLA I KARTY
+   ===================================================================== */
+function h(tag,attrs={},...kids){
+  const e=document.createElement(tag);
+  for(const k in attrs){const v=attrs[k];if(v==null)continue;
+    if(k==='html')e.innerHTML=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v)}
+  for(const c of kids.flat()) if(c!=null) e.append(c.nodeType?c:document.createTextNode(c));
+  return e;
+}
+// pole z jednostką: spec 'dim' lub 'dim:jednostka'
+function mkField(label,spec,def){
+  const [dim,du]=spec.split(':');
+  const input=h('input',{type:'text',autocomplete:'off',spellcheck:'false'});
+  if(def!=null) input.value=def;
+  let sel=null;const row=h('div',{class:'row'},input);
+  if(UNITS[dim]){
+    sel=h('select',{'aria-label':'jednostka'});
+    UNITS[dim].u.forEach((u,i)=>sel.append(h('option',{value:i},u.sym)));
+    if(du){const i=UNITS[dim].u.findIndex(u=>u.sym===du);if(i>=0)sel.value=i}
+    row.append(sel);
+  }else if(NOUNIT[dim]) row.append(h('span',{class:'unitlbl'},NOUNIT[dim]));
+  const wrap=h('label',{class:'field'},h('span',{html:label}),row);
+  const unit=()=>sel?UNITS[dim].u[sel.value]:{sym:NOUNIT[dim]||'',f:1,o:0};
+  const F={wrap,input,sel,dim,label,
+    empty:()=>input.value.trim()==='',
+    get(){const x=readNum(input.value);const u=unit();return (x+u.o)*u.f},
+    set(si){const u=unit();input.value=toInput(si/u.f-u.o);input.classList.add('solved');input.dataset.si=si},
+    unitSym:()=>unit().sym,
+    show(si){const u=unit();return fmt(si/u.f-u.o)+(u.sym?' '+u.sym:'')}};
+  input.addEventListener('input',()=>{input.classList.remove('solved');delete input.dataset.si});
+  if(sel) sel.addEventListener('change',()=>{if(input.dataset.si!==undefined)F.set(+input.dataset.si)});
+  return F;
+}
+const okBox=html=>`<div class="res">${html}</div>`;
+const errBox=m=>`<div class="err">⚠️ ${esc(m)}</div>`;
+function run(out,fn){try{out.innerHTML=fn()}catch(e){out.innerHTML=errBox(e instanceof CalcError?e.message:('Błąd: '+e.message));if(!(e instanceof CalcError))console.error(e)}}
+const sqrtS=(x,m)=>{if(x<0&&x>-1e-12)x=0;if(x<0)throw err(m||'Brak rozwiązania rzeczywistego (pierwiastek z liczby ujemnej)');return Math.sqrt(x)};
+const asinS=x=>{if(Math.abs(x)>1+1e-12)throw err('Brak rozwiązania: |sin| > 1 (np. całkowite wewnętrzne odbicie)');return Math.asin(Math.max(-1,Math.min(1,x)))};
+const acosS=x=>{if(Math.abs(x)>1+1e-12)throw err('Brak rozwiązania: |cos| > 1');return Math.acos(Math.max(-1,Math.min(1,x)))};
+const posLog=(x,m)=>{if(!(x>0))throw err(m||'Logarytm z liczby ≤ 0 – brak rozwiązania');return Math.log(x)};
+
+/* Karta wzoru: zostaw jedno pole puste */
+function formulaCard(f){
+  const fields={};
+  const card=h('div',{class:'card','data-s':(f.name+' '+(f.tags||'')+' '+f.eq).toLowerCase()});
+  card.append(h('h3',{html:f.name}),h('div',{class:'eq',html:f.eq}));
+  if(f.note) card.append(h('div',{class:'note',html:f.note}));
+  for(const [k,label,dim,def] of f.v){fields[k]=mkField(label,dim,def);card.append(fields[k].wrap)}
+  const out=h('div',{class:'out'});
+  const calc=()=>run(out,()=>{
+    const keys=Object.keys(fields);
+    const empty=keys.filter(k=>fields[k].empty()&&!(fields[k].input.classList.contains('solved')));
+    let target;
+    if(empty.length===1) target=empty[0];
+    else if(empty.length===0){
+      const solved=keys.filter(k=>fields[k].input.classList.contains('solved'));
+      if(solved.length===1) target=solved[0]; else throw err('Wszystkie pola są wypełnione – wyczyść to, które chcesz obliczyć.');
+    } else throw err('Zostaw puste dokładnie jedno pole (teraz puste: '+empty.length+').');
+    if(!f.s[target]) throw err('Tej wielkości nie da się wyznaczyć jednoznacznie z tego wzoru.');
+    const v={};
+    for(const k of keys) if(k!==target){try{v[k]=fields[k].get()}catch(e){throw err(stripTags(fields[k].label)+': '+e.message)}}
+    const r=f.s[target](v);
+    if(typeof r!=='number'||!Number.isFinite(r)) throw err('Wynik nieokreślony – sprawdź dane (np. dzielenie przez zero).');
+    fields[target].set(r);
+    const F=fields[target];
+    return okBox(`${F.label} = <b>${F.show(r)}</b>`+(()=>{if(!F.sel)return'';const su=UNITS[F.dim].u.find(u=>u.f===1&&!u.o),cu=UNITS[F.dim].u[F.sel.value];return su&&su!==cu?` <span class="muted">(${fmt(r)} ${su.sym})</span>`:''})()+(f.after?f.after(v,r,target):''));
+  });
+  for(const k in fields) fields[k].input.addEventListener('keydown',e=>{if(e.key==='Enter')calc()});
+  card.append(h('div',{class:'btns'},
+    h('button',{class:'b p',onclick:calc},'Oblicz'),
+    h('button',{class:'b',onclick:()=>{for(const k in fields){const i=fields[k].input;i.value='';i.classList.remove('solved');delete i.dataset.si}out.innerHTML=''}},'Wyczyść')),out);
+  return card;
+}
+const stripTags=s=>s.replace(/<[^>]+>/g,'');
+function toolCard(name,eq,tags,build,wide){
+  const card=h('div',{class:'card'+(wide?' wide':''),'data-s':(name+' '+tags).toLowerCase()});
+  card.append(h('h3',{},name));
+  if(eq) card.append(h('div',{class:'note',html:eq}));
+  build(card);return card;
+}
+function renderSection(id,groups){
+  const root=document.getElementById(id);
+  for(const [cat,items] of groups){
+    const g=h('div',{class:'grid'});
+    for(const it of items) g.append(typeof it==='function'?it():formulaCard(it));
+    root.append(h('div',{class:'cat'},cat),g);
+  }
+}
+
+/* =====================================================================
+   7. FIZYKA
+   ===================================================================== */
+const sq=x=>x*x;
+const PHYS=[
+['Kinematyka',[
+ {name:'Ruch jednostajnie przyspieszony – prędkość',eq:'v = v<sub>0</sub> + a·t',tags:'kinematyka ruch',
+  v:[['v','Prędkość końcowa v','speed'],['v0','Prędkość początkowa v<sub>0</sub>','speed'],['a','Przyspieszenie a','acc'],['t','Czas t','time']],
+  s:{v:v=>v.v0+v.a*v.t,v0:v=>v.v-v.a*v.t,a:v=>(v.v-v.v0)/v.t,t:v=>(v.v-v.v0)/v.a}},
+ {name:'Ruch jednostajnie przyspieszony – droga',eq:'s = v<sub>0</sub>·t + ½·a·t²',tags:'kinematyka droga',
+  v:[['s','Droga s','length'],['v0','Prędkość początkowa v<sub>0</sub>','speed'],['a','Przyspieszenie a','acc'],['t','Czas t','time']],
+  s:{s:v=>v.v0*v.t+v.a*v.t*v.t/2,v0:v=>(v.s-v.a*v.t*v.t/2)/v.t,a:v=>2*(v.s-v.v0*v.t)/(v.t*v.t),
+     t:v=>{ if(v.a===0){const t=v.s/v.v0;if(!(t>=0))throw err('Brak dodatniego czasu');return t}
+       const D=v.v0*v.v0+2*v.a*v.s;const sD=sqrtS(D,'Ciało nigdy nie osiąga tej drogi');
+       const q=-0.5*(v.v0+Math.sign(v.v0||1)*sD); // numerycznie stabilne pierwiastki
+       const r=[q/(v.a/2),(-v.s)/q].filter(t=>Number.isFinite(t)&&t>=0).sort((a,b)=>a-b);
+       if(!r.length)throw err('Brak dodatniego rozwiązania dla czasu');return r[0]}}},
+ {name:'Wzór bezczasowy',eq:'v² = v<sub>0</sub>² + 2·a·s',tags:'kinematyka',
+  v:[['v','Prędkość końcowa v','speed'],['v0','Prędkość początkowa v<sub>0</sub>','speed'],['a','Przyspieszenie a','acc'],['s','Droga s','length']],
+  s:{v:v=>sqrtS(v.v0*v.v0+2*v.a*v.s),v0:v=>sqrtS(v.v*v.v-2*v.a*v.s),a:v=>(v.v*v.v-v.v0*v.v0)/(2*v.s),s:v=>(v.v*v.v-v.v0*v.v0)/(2*v.a)}},
+ {name:'Ruch po okręgu',eq:'a<sub>d</sub> = v²/r ,  v = 2πr/T',tags:'okrąg dośrodkowe',
+  v:[['a','Przyspieszenie dośrodkowe a<sub>d</sub>','acc'],['v','Prędkość liniowa v','speed'],['r','Promień r','length']],
+  s:{a:v=>v.v*v.v/v.r,v:v=>sqrtS(v.a*v.r),r:v=>v.v*v.v/v.a}},
+ ()=>projectileTool(),
+]],
+['Dynamika i energia',[
+ {name:'II zasada dynamiki Newtona',eq:'F = m·a',tags:'newton siła',
+  v:[['F','Siła F','force'],['m','Masa m','mass'],['a','Przyspieszenie a','acc']],
+  s:{F:v=>v.m*v.a,m:v=>v.F/v.a,a:v=>v.F/v.m}},
+ {name:'Pęd',eq:'p = m·v',tags:'pęd',
+  v:[['p','Pęd p','momentum'],['m','Masa m','mass'],['v','Prędkość v','speed']],
+  s:{p:v=>v.m*v.v,m:v=>v.p/v.v,v:v=>v.p/v.m}},
+ {name:'Energia kinetyczna',eq:'E<sub>k</sub> = ½·m·v²',tags:'energia kinetyczna',
+  v:[['E','Energia E<sub>k</sub>','energy'],['m','Masa m','mass'],['v','Prędkość v','speed']],
+  s:{E:v=>v.m*v.v*v.v/2,m:v=>2*v.E/(v.v*v.v),v:v=>sqrtS(2*v.E/v.m)}},
+ {name:'Energia potencjalna grawitacji',eq:'E<sub>p</sub> = m·g·h',tags:'energia potencjalna',
+  v:[['E','Energia E<sub>p</sub>','energy'],['m','Masa m','mass'],['g','Przyspieszenie g','acc','9,80665'],['h','Wysokość h','length']],
+  s:{E:v=>v.m*v.g*v.h,m:v=>v.E/(v.g*v.h),g:v=>v.E/(v.m*v.h),h:v=>v.E/(v.m*v.g)}},
+ {name:'Energia sprężystości',eq:'E = ½·k·x²',tags:'sprężyna energia hooke',
+  v:[['E','Energia E','energy'],['k','Współczynnik k','springK'],['x','Wydłużenie x','length']],
+  s:{E:v=>v.k*v.x*v.x/2,k:v=>2*v.E/(v.x*v.x),x:v=>sqrtS(2*v.E/v.k)}},
+ {name:'Praca',eq:'W = F·s·cos α',tags:'praca',
+  v:[['W','Praca W','energy'],['F','Siła F','force'],['s','Przesunięcie s','length'],['al','Kąt α','angle','0']],
+  s:{W:v=>v.F*v.s*Math.cos(v.al),F:v=>v.W/(v.s*Math.cos(v.al)),s:v=>v.W/(v.F*Math.cos(v.al)),al:v=>acosS(v.W/(v.F*v.s))}},
+ {name:'Moc',eq:'P = W / t',tags:'moc',
+  v:[['P','Moc P','power'],['W','Praca W','energy'],['t','Czas t','time']],
+  s:{P:v=>v.W/v.t,W:v=>v.P*v.t,t:v=>v.W/v.P}},
+ {name:'Prawo Hooke’a',eq:'F = k·x',tags:'sprężyna hooke',
+  v:[['F','Siła F','force'],['k','Współczynnik k','springK'],['x','Wydłużenie x','length']],
+  s:{F:v=>v.k*v.x,k:v=>v.F/v.x,x:v=>v.F/v.k}},
+ {name:'Tarcie',eq:'T = μ·N',tags:'tarcie',
+  v:[['T','Siła tarcia T','force'],['mu','Współczynnik tarcia μ','one'],['N','Nacisk N','force']],
+  s:{T:v=>v.mu*v.N,mu:v=>v.T/v.N,N:v=>v.T/v.mu}},
+]],
+['Grawitacja',[
+ {name:'Prawo powszechnego ciążenia',eq:'F = G·m<sub>1</sub>·m<sub>2</sub> / r²',tags:'grawitacja newton',
+  v:[['F','Siła F','force'],['m1','Masa m<sub>1</sub>','mass'],['m2','Masa m<sub>2</sub>','mass'],['r','Odległość r','length']],
+  s:{F:v=>C.G*v.m1*v.m2/(v.r*v.r),m1:v=>v.F*v.r*v.r/(C.G*v.m2),m2:v=>v.F*v.r*v.r/(C.G*v.m1),r:v=>sqrtS(C.G*v.m1*v.m2/v.F)}},
+ {name:'Prędkość orbitalna (I kosmiczna)',eq:'v = √(G·M / r)',tags:'orbita kosmiczna',
+  v:[['v','Prędkość v','speed'],['M','Masa ciała centralnego M','mass','5,9722e24'],['r','Promień orbity r','length:km','6371']],
+  s:{v:v=>sqrtS(C.G*v.M/v.r),M:v=>v.v*v.v*v.r/C.G,r:v=>C.G*v.M/(v.v*v.v)}},
+ {name:'Prędkość ucieczki (II kosmiczna)',eq:'v = √(2·G·M / r)',tags:'ucieczki kosmiczna',
+  v:[['v','Prędkość v','speed'],['M','Masa M','mass','5,9722e24'],['r','Promień r','length:km','6371']],
+  s:{v:v=>sqrtS(2*C.G*v.M/v.r),M:v=>v.v*v.v*v.r/(2*C.G),r:v=>2*C.G*v.M/(v.v*v.v)}},
+ {name:'III prawo Keplera',eq:'T² = 4π²·a³ / (G·M)',tags:'kepler orbita okres',
+  v:[['T','Okres obiegu T','time:doba'],['a','Półoś wielka a','length:km'],['M','Masa ciała centralnego M','mass','1,98847e30']],
+  s:{T:v=>2*PI*Math.sqrt(v.a**3/(C.G*v.M)),a:v=>Math.cbrt(v.T*v.T*C.G*v.M/(4*PI*PI)),M:v=>4*PI*PI*v.a**3/(C.G*v.T*v.T)}},
+]],
+['Drgania i fale',[
+ {name:'Wahadło matematyczne',eq:'T = 2π·√(l / g)',tags:'wahadło okres drgania',
+  v:[['T','Okres T','time'],['l','Długość l','length'],['g','Przyspieszenie g','acc','9,80665']],
+  s:{T:v=>2*PI*sqrtS(v.l/v.g),l:v=>v.g*sq(v.T/(2*PI)),g:v=>v.l*sq(2*PI/v.T)}},
+ {name:'Wahadło sprężynowe',eq:'T = 2π·√(m / k)',tags:'sprężyna okres drgania',
+  v:[['T','Okres T','time'],['m','Masa m','mass'],['k','Współczynnik k','springK']],
+  s:{T:v=>2*PI*sqrtS(v.m/v.k),m:v=>v.k*sq(v.T/(2*PI)),k:v=>v.m*sq(2*PI/v.T)}},
+ {name:'Fala: prędkość, długość, częstotliwość',eq:'v = λ·f',tags:'fala długość częstotliwość',
+  v:[['v','Prędkość v','speed'],['l','Długość fali λ','length'],['f','Częstotliwość f','frequency']],
+  s:{v:v=>v.l*v.f,l:v=>v.v/v.f,f:v=>v.v/v.l}},
+ {name:'Okres i częstotliwość',eq:'f = 1 / T',tags:'okres częstotliwość',
+  v:[['f','Częstotliwość f','frequency'],['T','Okres T','time']],
+  s:{f:v=>1/v.T,T:v=>1/v.f}},
+ {name:'Efekt Dopplera (dźwięk)',eq:'f′ = f·(v + v<sub>o</sub>) / (v − v<sub>z</sub>)',note:'v<sub>o</sub> > 0 – obserwator zbliża się, v<sub>z</sub> > 0 – źródło zbliża się.',tags:'doppler dźwięk',
+  v:[['f2','Częstotliwość odbierana f′','frequency'],['f','Częstotliwość źródła f','frequency'],['v','Prędkość dźwięku v','speed','343'],['vo','Prędkość obserwatora v<sub>o</sub>','speed','0'],['vz','Prędkość źródła v<sub>z</sub>','speed','0']],
+  s:{f2:v=>v.f*(v.v+v.vo)/(v.v-v.vz),f:v=>v.f2*(v.v-v.vz)/(v.v+v.vo),vo:v=>v.f2*(v.v-v.vz)/v.f-v.v,vz:v=>v.v-v.f*(v.v+v.vo)/v.f2}},
+]],
+['Termodynamika',[
+ {name:'Równanie Clapeyrona (gaz doskonały)',eq:'p·V = n·R·T',tags:'gaz doskonały clapeyron',
+  v:[['p','Ciśnienie p','pressure:hPa'],['V','Objętość V','volume:dm³'],['n','Liczność n','amount'],['T','Temperatura T','temp:K']],
+  s:{p:v=>v.n*C.R*v.T/v.V,V:v=>v.n*C.R*v.T/v.p,n:v=>v.p*v.V/(C.R*v.T),T:v=>v.p*v.V/(v.n*C.R)}},
+ {name:'Ciepło właściwe',eq:'Q = m·c·ΔT',tags:'ciepło właściwe',
+  v:[['Q','Ciepło Q','energy'],['m','Masa m','mass'],['c','Ciepło właściwe c','specHeat','4186'],['dT','Zmiana temperatury ΔT','dtemp']],
+  s:{Q:v=>v.m*v.c*v.dT,m:v=>v.Q/(v.c*v.dT),c:v=>v.Q/(v.m*v.dT),dT:v=>v.Q/(v.m*v.c)}},
+ {name:'Ciepło przemiany fazowej',eq:'Q = m·L',tags:'topnienie parowanie ciepło',
+  v:[['Q','Ciepło Q','energy'],['m','Masa m','mass'],['L','Ciepło przemiany L [J/kg]','one','334000']],
+  s:{Q:v=>v.m*v.L,m:v=>v.Q/v.L,L:v=>v.Q/v.m}},
+ {name:'Sprawność silnika Carnota',eq:'η = 1 − T<sub>2</sub> / T<sub>1</sub>',tags:'carnot sprawność',
+  v:[['eta','Sprawność η (0–1)','one'],['T1','Temperatura źródła T<sub>1</sub>','temp'],['T2','Temperatura chłodnicy T<sub>2</sub>','temp']],
+  s:{eta:v=>1-v.T2/v.T1,T1:v=>v.T2/(1-v.eta),T2:v=>v.T1*(1-v.eta)}},
+ {name:'Prawo Stefana–Boltzmanna',eq:'P = ε·σ·A·T⁴',tags:'promieniowanie ciało doskonale czarne',
+  v:[['P','Moc promieniowania P','power'],['eps','Emisyjność ε','one','1'],['A','Powierzchnia A','area'],['T','Temperatura T','temp']],
+  s:{P:v=>v.eps*C.sigma*v.A*v.T**4,eps:v=>v.P/(C.sigma*v.A*v.T**4),A:v=>v.P/(v.eps*C.sigma*v.T**4),T:v=>Math.pow(v.P/(v.eps*C.sigma*v.A),0.25)}},
+ {name:'Prawo Wiena',eq:'λ<sub>max</sub> = b / T',tags:'wien promieniowanie',
+  v:[['l','Długość fali λ<sub>max</sub>','length:nm'],['T','Temperatura T','temp']],
+  s:{l:v=>C.bW/v.T,T:v=>C.bW/v.l}},
+]],
+['Hydrostatyka',[
+ {name:'Gęstość',eq:'ρ = m / V',tags:'gęstość',
+  v:[['rho','Gęstość ρ','density'],['m','Masa m','mass'],['V','Objętość V','volume']],
+  s:{rho:v=>v.m/v.V,m:v=>v.rho*v.V,V:v=>v.m/v.rho}},
+ {name:'Ciśnienie',eq:'p = F / S',tags:'ciśnienie',
+  v:[['p','Ciśnienie p','pressure'],['F','Siła nacisku F','force'],['S','Powierzchnia S','area']],
+  s:{p:v=>v.F/v.S,F:v=>v.p*v.S,S:v=>v.F/v.p}},
+ {name:'Ciśnienie hydrostatyczne',eq:'p = ρ·g·h',tags:'hydrostatyczne',
+  v:[['p','Ciśnienie p','pressure'],['rho','Gęstość cieczy ρ','density','1000'],['g','Przyspieszenie g','acc','9,80665'],['h','Głębokość h','length']],
+  s:{p:v=>v.rho*v.g*v.h,rho:v=>v.p/(v.g*v.h),g:v=>v.p/(v.rho*v.h),h:v=>v.p/(v.rho*v.g)}},
+ {name:'Siła wyporu (prawo Archimedesa)',eq:'F<sub>w</sub> = ρ·g·V',tags:'archimedes wypór',
+  v:[['F','Siła wyporu F<sub>w</sub>','force'],['rho','Gęstość płynu ρ','density','1000'],['g','Przyspieszenie g','acc','9,80665'],['V','Objętość zanurzona V','volume']],
+  s:{F:v=>v.rho*v.g*v.V,rho:v=>v.F/(v.g*v.V),g:v=>v.F/(v.rho*v.V),V:v=>v.F/(v.rho*v.g)}},
+]],
+['Elektryczność',[
+ {name:'Prawo Ohma',eq:'U = I·R',tags:'ohm prąd napięcie opór',
+  v:[['U','Napięcie U','voltage'],['I','Natężenie I','current'],['R','Opór R','resistance']],
+  s:{U:v=>v.I*v.R,I:v=>v.U/v.R,R:v=>v.U/v.I}},
+ {name:'Moc prądu',eq:'P = U·I',tags:'moc elektryczna',
+  v:[['P','Moc P','power'],['U','Napięcie U','voltage'],['I','Natężenie I','current']],
+  s:{P:v=>v.U*v.I,U:v=>v.P/v.I,I:v=>v.P/v.U}},
+ {name:'Opór przewodnika',eq:'R = ρ·l / S',tags:'opór właściwy przewodnik',
+  v:[['R','Opór R','resistance'],['rho','Opór właściwy ρ [Ω·m]','one','1,68e-8'],['l','Długość l','length'],['S','Przekrój S','area:mm²']],
+  s:{R:v=>v.rho*v.l/v.S,rho:v=>v.R*v.S/v.l,l:v=>v.R*v.S/v.rho,S:v=>v.rho*v.l/v.R}},
+ {name:'Natężenie prądu',eq:'I = q / t',tags:'ładunek prąd',
+  v:[['I','Natężenie I','current'],['q','Ładunek q','charge'],['t','Czas t','time']],
+  s:{I:v=>v.q/v.t,q:v=>v.I*v.t,t:v=>v.q/v.I}},
+ {name:'Prawo Coulomba',eq:'F = k·q<sub>1</sub>·q<sub>2</sub> / r²',tags:'coulomb ładunek',
+  v:[['F','Siła F','force'],['q1','Ładunek q<sub>1</sub>','charge:µC'],['q2','Ładunek q<sub>2</sub>','charge:µC'],['r','Odległość r','length']],
+  s:{F:v=>C.ke*v.q1*v.q2/(v.r*v.r),q1:v=>v.F*v.r*v.r/(C.ke*v.q2),q2:v=>v.F*v.r*v.r/(C.ke*v.q1),r:v=>sqrtS(C.ke*v.q1*v.q2/v.F)}},
+ {name:'Kondensator',eq:'Q = C·U ,  E = ½·C·U²',tags:'kondensator pojemność',
+  v:[['C','Pojemność C','capacitance:µF'],['U','Napięcie U','voltage'],['Q','Ładunek Q','charge']],
+  s:{Q:v=>v.C*v.U,C:v=>v.Q/v.U,U:v=>v.Q/v.C},after:(v,r,t)=>{const Cc=t==='C'?r:v.C,Uu=t==='U'?r:v.U;return `<br>Energia: ${fmt(Cc*Uu*Uu/2)} J`}},
+ ()=>resistorTool(),
+]],
+['Optyka',[
+ {name:'Prawo Snelliusa',eq:'n<sub>1</sub>·sin α = n<sub>2</sub>·sin β',tags:'załamanie snellius',
+  v:[['n1','Współczynnik n<sub>1</sub>','one','1'],['a','Kąt padania α','angle'],['n2','Współczynnik n<sub>2</sub>','one','1,333'],['b','Kąt załamania β','angle']],
+  s:{n1:v=>v.n2*Math.sin(v.b)/Math.sin(v.a),a:v=>asinS(v.n2*Math.sin(v.b)/v.n1),n2:v=>v.n1*Math.sin(v.a)/Math.sin(v.b),b:v=>asinS(v.n1*Math.sin(v.a)/v.n2)}},
+ {name:'Równanie soczewki',eq:'1/f = 1/x + 1/y',note:'x – odległość przedmiotu, y – obrazu (ujemne dla obrazu pozornego). Powiększenie p = |y/x|.',tags:'soczewka zwierciadło',
+  v:[['f','Ogniskowa f','length:cm'],['x','Odległość przedmiotu x','length:cm'],['y','Odległość obrazu y','length:cm']],
+  s:{f:v=>1/(1/v.x+1/v.y),x:v=>1/(1/v.f-1/v.y),y:v=>1/(1/v.f-1/v.x)},
+  after:(v,r,t)=>{const x=t==='x'?r:v.x,y=t==='y'?r:v.y;return `<br>Powiększenie p = ${fmt(Math.abs(y/x))}`}},
+ {name:'Zdolność skupiająca',eq:'Z = 1 / f',tags:'dioptrie soczewka',
+  v:[['Z','Zdolność Z [D]','one'],['f','Ogniskowa f','length:cm']],
+  s:{Z:v=>1/v.f,f:v=>1/v.Z}},
+]],
+['Fizyka współczesna',[
+ {name:'Energia fotonu',eq:'E = h·f = h·c / λ',tags:'foton planck kwant',
+  v:[['E','Energia E','energy:eV'],['l','Długość fali λ','length:nm']],
+  s:{E:v=>C.h*C.c/v.l,l:v=>C.h*C.c/v.E},after:(v,r,t)=>{const l=t==='l'?r:v.l;return `<br>Częstotliwość f = ${fmt(C.c/l)} Hz`}},
+ {name:'Zjawisko fotoelektryczne',eq:'h·f = W + E<sub>k</sub>',tags:'fotoefekt einstein praca wyjścia',
+  v:[['f','Częstotliwość f','frequency:THz'],['W','Praca wyjścia W','energy:eV'],['E','Energia kinetyczna E<sub>k</sub>','energy:eV']],
+  s:{f:v=>(v.W+v.E)/C.h,W:v=>C.h*v.f-v.E,E:v=>{const e=C.h*v.f-v.W;if(e<0)throw err('Foton ma za małą energię – fotoemisja nie zachodzi');return e}}},
+ {name:'Fale de Broglie’a',eq:'λ = h / (m·v)',tags:'de broglie',
+  v:[['l','Długość fali λ','length:nm'],['m','Masa m','mass','9,1093837139e-31'],['v','Prędkość v','speed']],
+  s:{l:v=>C.h/(v.m*v.v),m:v=>C.h/(v.l*v.v),v:v=>C.h/(v.l*v.m)}},
+ {name:'Równoważność masy i energii',eq:'E = m·c²',tags:'einstein relatywistyka',
+  v:[['E','Energia E','energy'],['m','Masa m','mass']],
+  s:{E:v=>v.m*C.c*C.c,m:v=>v.E/(C.c*C.c)}},
+ {name:'Dylatacja czasu',eq:'Δt = Δt<sub>0</sub> / √(1 − v²/c²)',tags:'relatywistyka lorentz',
+  v:[['dt','Czas w układzie obserwatora Δt','time'],['dt0','Czas własny Δt<sub>0</sub>','time'],['v','Prędkość v','speed:c']],
+  s:{dt:v=>{if(Math.abs(v.v)>=C.c)throw err('Prędkość musi być mniejsza od c');return v.dt0/Math.sqrt(1-sq(v.v/C.c))},
+     dt0:v=>{if(Math.abs(v.v)>=C.c)throw err('Prędkość musi być mniejsza od c');return v.dt*Math.sqrt(1-sq(v.v/C.c))},
+     v:v=>C.c*sqrtS(1-sq(v.dt0/v.dt),'Δt musi być ≥ Δt₀')},
+  after:(v,r,t)=>{const vv=t==='v'?r:v.v;return `<br>Czynnik Lorentza γ = ${fmt(1/Math.sqrt(1-sq(vv/C.c)))}`}},
+ {name:'Rozpad promieniotwórczy',eq:'N = N<sub>0</sub>·(½)<sup>t/T½</sup>',tags:'rozpad połowicznego zaniku izotop',
+  v:[['N','Pozostało N','any'],['N0','Na początku N<sub>0</sub>','any'],['t','Czas t','time:rok'],['T','Czas połowicznego rozpadu T<sub>½</sub>','time:rok','5730']],
+  s:{N:v=>v.N0*Math.pow(2,-v.t/v.T),N0:v=>v.N*Math.pow(2,v.t/v.T),t:v=>v.T*posLog(v.N0/v.N)/Math.LN2,T:v=>v.t*Math.LN2/posLog(v.N0/v.N)}},
+ {name:'Model Bohra – linie widmowe wodoru',eq:'1/λ = R<sub>∞</sub>·(1/n<sub>1</sub>² − 1/n<sub>2</sub>²)',note:'Stała Rydberga dla nieskończonej masy jądra; poprawka na masę protonu: R<sub>H</sub> = R<sub>∞</sub>/(1+m<sub>e</sub>/m<sub>p</sub>) – uwzględniona.',tags:'bohr rydberg widmo wodór balmer',
+  v:[['l','Długość fali λ','length:nm'],['n1','Niższa orbita n<sub>1</sub>','one','2'],['n2','Wyższa orbita n<sub>2</sub>','one','3']],
+  s:{l:v=>{if(!(v.n2>v.n1&&v.n1>=1))throw err('Musi być n₂ > n₁ ≥ 1');return 1/((C.Rinf/(1+C.me/C.mp))*(1/(v.n1*v.n1)-1/(v.n2*v.n2)))}}},
+]],
+];
+function projectileTool(){
+  return toolCard('Rzut ukośny (bez oporu powietrza)','Czas lotu, zasięg, maks. wysokość i prędkość uderzenia. h<sub>0</sub> – wysokość startu.','rzut ukośny poziomy pionowy balistyka',card=>{
+    const v0=mkField('Prędkość początkowa v<sub>0</sub>','speed','20'),al=mkField('Kąt rzutu α','angle','45'),
+      h0=mkField('Wysokość początkowa h<sub>0</sub>','length','0'),g=mkField('Przyspieszenie g','acc','9,80665');
+    const out=h('div',{class:'out'});
+    card.append(v0.wrap,al.wrap,h0.wrap,g.wrap,h('div',{class:'btns'},h('button',{class:'b p',onclick:()=>run(out,()=>{
+      const V=v0.get(),A=al.get(),H=h0.get(),G=g.get();if(!(G>0))throw err('g musi być > 0');if(H<0)throw err('h₀ ≥ 0');
+      const vx=V*Math.cos(A),vy=V*Math.sin(A);
+      const t=(vy+Math.sqrt(vy*vy+2*G*H))/G;
+      const hmax=H+(vy>0?vy*vy/(2*G):0);
+      const vyk=vy-G*t;
+      return okBox(`<table class="t"><tr><td>Czas lotu</td><td class="num"><b>${fmt(t)}</b> s</td></tr>
+        <tr><td>Zasięg</td><td class="num"><b>${fmt(vx*t)}</b> m</td></tr>
+        <tr><td>Maks. wysokość</td><td class="num"><b>${fmt(hmax)}</b> m</td></tr>
+        <tr><td>Czas wznoszenia</td><td class="num">${fmt(Math.max(0,vy/G))} s</td></tr>
+        <tr><td>Prędkość uderzenia</td><td class="num">${fmt(Math.hypot(vx,vyk))} m/s</td></tr>
+        <tr><td>Kąt uderzenia (pod poziomem)</td><td class="num">${fmt(Math.atan2(-vyk,vx)*180/PI)}°</td></tr></table>`)})},'Oblicz')),out);
+  });
+}
+function resistorTool(){
+  return toolCard('Łączenie oporników / kondensatorów','Wpisz wartości oddzielone średnikiem lub spacją (można używać wyrażeń, np. <code>1e3</code>).','opornik rezystor szeregowo równolegle kondensator',card=>{
+    const ta=h('input',{value:'100; 220; 470'});
+    const out=h('div',{class:'out'});
+    card.append(h('label',{class:'field'},h('span',{},'Wartości (Ω lub F)'),ta),h('div',{class:'btns'},h('button',{class:'b p',onclick:()=>run(out,()=>{
+      const xs=splitList(ta.value).map(s=>evaluate(s));if(!xs.length)throw err('Podaj wartości');
+      const ser=sumQ(xs);
+      if(xs.some(x=>toNum(x)===0))throw err('Wartość 0 przy łączeniu równoległym');
+      const par=binop('/',Q.of(1),sumQ(xs.map(x=>binop('/',Q.of(1),x))));
+      const show=v=>isQ(v)&&!v.isInt()?`${fmt(v)} <span class="muted">(= ${v.n}/${v.d})</span>`:fmt(v);
+      return okBox(`<b>Oporniki</b> – szeregowo: ${show(ser)} Ω, równolegle: ${show(par)} Ω<br><b>Kondensatory</b> – równolegle: ${show(ser)} F, szeregowo: ${show(par)} F`)})},'Oblicz')),out);
+  });
+}
+const splitList=s=>s.split(/[;\n\s]+/).map(x=>x.trim()).filter(Boolean);
+
+/* =====================================================================
+   8. CHEMIA
+   ===================================================================== */
+// --- parser wzorów chemicznych ---
+function parseSpecies(raw){
+  let s=raw.trim().replace(/\s+/g,'')
+    .replace(/[₀-₉]/g,c=>'0123456789'['₀₁₂₃₄₅₆₇₈₉'.indexOf(c)])
+    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g,c=>'^'+'0123456789'['⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c)]).replace(/\^(\d)\^?/g,'^$1')
+    .replace(/⁺/g,'+').replace(/⁻/g,'-');
+  if(!s) throw err('Pusty wzór');
+  let charge=0,m;
+  if((m=/\^\{?(\d*)([+-])\}?$/.exec(s))||(m=/\{(\d*)([+-])\}$/.exec(s))){charge=(m[1]?+m[1]:1)*(m[2]==='+'?1:-1);s=s.slice(0,m.index)}
+  else if((m=/([+-])$/.exec(s))&&/[A-Za-z)\]\d]/.test(s[m.index-1]||'')){charge=m[1]==='+'?1:-1;s=s.slice(0,m.index)}
+  if(s==='e'||s==='e-') return{atoms:{},charge:charge||-1,label:raw.trim(),electron:true};
+  const atoms={};
+  const parts=s.split(/[·•∙*.]/);
+  parts.forEach((part,idx)=>{
+    let mult=1;const mm=/^(\d+)/.exec(part);
+    if(mm){mult=+mm[1];part=part.slice(mm[1].length)}
+    if(!part) throw err('Niepoprawny wzór: „'+raw+'”');
+    let i=0;
+    function group(close){
+      const res={};
+      while(i<part.length){
+        const ch=part[i];
+        if(ch==='('||ch==='['||ch==='{'){
+          const cl={'(':')','[':']','{':'}'}[ch];i++;const sub=group(cl);
+          if(part[i]!==cl) throw err('Niedomknięty nawias w „'+raw+'”');i++;
+          const k=readInt();for(const e in sub)res[e]=(res[e]||0)+sub[e]*k;
+        }else if(ch===')'||ch===']'||ch==='}'){ if(ch!==close)throw err('Niepasujący nawias w „'+raw+'”');return res}
+        else if(/[A-Z]/.test(ch)){
+          let sym=ch;if(/[a-z]/.test(part[i+1]||'')){sym+=part[i+1]}
+          if(!ATOMIC[sym]&&sym.length===2&&ATOMIC[ch]) sym=ch; // np. „Co” vs „CO” rozstrzyga wielkość liter
+          if(!ATOMIC[sym]) throw err('Nieznany pierwiastek „'+sym+'” w „'+raw+'”');
+          i+=sym.length;const k=readInt();res[sym]=(res[sym]||0)+k;
+        }else throw err('Niepoprawny znak „'+ch+'” we wzorze „'+raw+'”');
+      }
+      if(close) throw err('Niedomknięty nawias w „'+raw+'”');
+      return res;
+    }
+    function readInt(){const mm=/^\d+/.exec(part.slice(i));if(!mm)return 1;i+=mm[0].length;return +mm[0]}
+    const g=group(null);
+    for(const e in g) atoms[e]=(atoms[e]||0)+g[e]*mult;
+  });
+  return{atoms,charge,label:raw.trim()};
+}
+function molarMassQ(sp){let M=Q.of(0);for(const e in sp.atoms)M=M.add(ATOMIC_Q[e].mul(Q.of(sp.atoms[e])));return M}
+function prettyFormula(s){
+  let t=esc(s.trim());
+  t=t.replace(/\^\{?(\d*[+-])\}?$/,'<sup>$1</sup>');
+  t=t.replace(/([A-Za-z)\]\}])(\d+)/g,'$1<sub>$2</sub>');
+  if(!/<sup>/.test(t)) t=t.replace(/([A-Za-z)\]\}>])([+-])$/,'$1<sup>$2</sup>');
+  t=t.replace(/[*.·]/g,'·');
+  return t;
+}
+function molarTool(){
+  return toolCard('Masa molowa, skład procentowy, przeliczenia','Wzór, np. <code>Ca(OH)2</code>, <code>CuSO4·5H2O</code>, <code>K4[Fe(CN)6]</code>, <code>SO4^2-</code>. Masa liczona dokładnie (arytmetyka wymierna) z mas IUPAC.','masa molowa skład procentowy mol liczba cząsteczek stechiometria',card=>{
+    const fi=h('input',{value:'CuSO4·5H2O'});
+    const mm=mkField('Masa próbki (opcjonalnie)','mass:g','');
+    const nn=mkField('…lub liczność (opcjonalnie)','amount','');
+    const out=h('div',{class:'out'});
+    const go=()=>run(out,()=>{
+      const sp=parseSpecies(fi.value);if(sp.electron)throw err('To elektron');
+      const MQ=molarMassQ(sp),M=MQ.toNumber();
+      let rows='';
+      for(const e of Object.keys(sp.atoms)){const me=ATOMIC_Q[e].mul(Q.of(sp.atoms[e])).toNumber();
+        rows+=`<tr><td>${e}</td><td class="num">${sp.atoms[e]}</td><td class="num">${ATOMIC[e].replace('.',',')}</td><td class="num">${fmt(me)}</td><td class="num">${pct(me/M)}</td></tr>`}
+      let extra='';
+      if(!mm.empty()||!nn.empty()){
+        const n=!mm.empty()?mm.get()/(M/1000):nn.get();
+        extra=`<br>n = <b>${fmt(n)}</b> mol · m = <b>${fmt(n*M)}</b> g · liczba drobin N = <b>${fmt(n*C.NA)}</b><br><span class="muted">Gdyby był gazem doskonałym: V = ${fmt(n*C.Vm*1000)} dm³ (0 °C, 1013,25 hPa)</span>`;
+      }
+      return okBox(`M(${prettyFormula(fi.value)}) = <b>${MQ.toDecimal(8).replace(/…$/,'…')}</b> g/mol`+(sp.charge?` <span class="muted">(jon, ładunek ${sp.charge>0?'+':''}${sp.charge}; masa elektronów pominięta)</span>`:'')+extra+
+        `<table class="t"><tr><th>Pierwiastek</th><th class="num">Atomów</th><th class="num">A [u]</th><th class="num">Masa [g/mol]</th><th class="num">% masowy</th></tr>${rows}</table>`);
+    });
+    fi.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+    card.append(h('label',{class:'field'},h('span',{},'Wzór sumaryczny'),fi),mm.wrap,nn.wrap,h('div',{class:'btns'},h('button',{class:'b p',onclick:go},'Oblicz')),out);
+  },true);
+}
+// --- bilansowanie równań: eliminacja Gaussa na liczbach wymiernych ---
+function splitSide(side){
+  let parts=side.split(/\s+\+\s+/);
+  if(parts.length===1) parts=side.split(/\+(?=\s*[A-Z0-9(\[e])/);
+  return parts.map(s=>s.trim()).filter(Boolean).map(s=>s.replace(/^\d+(?=[A-Z(\[]|e\b|e\^)/,''));
+}
+function balance(eq){
+  const sides=eq.split(/\s*(?:<=>|<->|⇌|⇄|→|⟶|->|=>|=)\s*/);
+  if(sides.length!==2) throw err('Użyj jednej strzałki: „->” lub „=”, np. H2 + O2 -> H2O');
+  const L=splitSide(sides[0]),R=splitSide(sides[1]);
+  if(!L.length||!R.length) throw err('Brak substratów lub produktów');
+  const sp=[...L,...R].map(parseSpecies);
+  const els=[...new Set(sp.flatMap(s=>Object.keys(s.atoms)))];
+  const rows=els.map(e=>sp.map((s,j)=>Q.of((s.atoms[e]||0)*(j<L.length?1:-1))));
+  if(sp.some(s=>s.charge)) rows.push(sp.map((s,j)=>Q.of(s.charge*(j<L.length?1:-1))));
+  // RREF
+  const m=rows.length,n=sp.length;const A=rows.map(r=>r.slice());
+  const piv=[];let r=0;
+  for(let c=0;c<n&&r<m;c++){
+    let p=-1;for(let i=r;i<m;i++)if(A[i][c].n!==0n){p=i;break}
+    if(p<0)continue;[A[r],A[p]]=[A[p],A[r]];
+    const inv=Q.of(1).div(A[r][c]);for(let j=0;j<n;j++)A[r][j]=A[r][j].mul(inv);
+    for(let i=0;i<m;i++)if(i!==r&&A[i][c].n!==0n){const f=A[i][c];for(let j=0;j<n;j++)A[i][j]=A[i][j].sub(f.mul(A[r][j]))}
+    piv.push(c);r++;
+  }
+  const free=[...Array(n).keys()].filter(c=>!piv.includes(c));
+  if(free.length===0) throw err('Tego równania nie da się zbilansować – sprawdź wzory (każdy pierwiastek musi występować po obu stronach).');
+  if(free.length>1) throw err('Równanie ma wiele niezależnych rozwiązań (to kilka reakcji naraz) – podaj je osobno lub uprość.');
+  const fc=free[0];const x=Array(n).fill(null);x[fc]=Q.of(1);
+  piv.forEach((c,i)=>{x[c]=A[i][fc].neg()});
+  let l=1n;for(const q of x)l=l/bgcd(l,q.d)*q.d;
+  let ints=x.map(q=>q.n*(l/q.d));
+  if(ints.every(v=>v<=0n)) ints=ints.map(v=>-v);
+  if(ints.some(v=>v<=0n)) throw err('Nie istnieje bilans z dodatnimi współczynnikami – sprawdź, czy substraty i produkty są po właściwych stronach.');
+  let g=ints.reduce((a,b)=>bgcd(a,b));ints=ints.map(v=>v/g);
+  return{L,R,sp,coef:ints,els};
+}
+function balanceTool(){
+  return toolCard('Bilansowanie równań reakcji + stechiometria','Np. <code>KMnO4 + HCl -> KCl + MnCl2 + Cl2 + H2O</code>. Jony z ładunkiem: <code>Fe^2+</code>, <code>MnO4^-</code>, elektron: <code>e^-</code>. Współczynniki wyznaczane dokładnie. Opcjonalnie podaj masy substratów – wskażę odczynnik limitujący i masy produktów.','bilansowanie równanie reakcji stechiometria odczynnik limitujący redoks',card=>{
+    const fi=h('input',{value:'KMnO4 + HCl -> KCl + MnCl2 + Cl2 + H2O'});
+    const out=h('div',{class:'out'}),stoich=h('div');
+    let last=null;
+    const showStoich=()=>{
+      stoich.innerHTML='';if(!last)return;
+      const {L,sp,coef}=last;const inputs=[];
+      const box=h('div',{class:'card',style:'margin-top:10px;background:var(--bg)'},h('h3',{},'Stechiometria'),h('div',{class:'note'},'Wpisz masę jednego lub kilku substratów (g).'));
+      L.forEach((s,i)=>{if(sp[i].electron){inputs.push(null);return}const f=mkField(prettyFormula(s)+' – masa','mass:g','');inputs.push(f);box.append(f.wrap)});
+      const o=h('div',{class:'out'});
+      box.append(h('div',{class:'btns'},h('button',{class:'b p',onclick:()=>run(o,()=>{
+        const M=sp.map(s=>s.electron?0:molarMassQ(s).toNumber()/1000);
+        let xi=Infinity,lim=-1;
+        inputs.forEach((f,i)=>{if(f&&!f.empty()){const n=f.get()/M[i];const e=n/Number(coef[i]);if(e<xi){xi=e;lim=i}}});
+        if(lim<0)throw err('Podaj masę co najmniej jednego substratu');
+        let rows='';
+        sp.forEach((s,i)=>{const n=Number(coef[i])*xi;const isR=i<L.length;
+          const given=isR&&inputs[i]&&!inputs[i].empty()?inputs[i].get()/M[i]:null;
+          rows+=`<tr><td>${isR?'substrat':'produkt'}</td><td>${prettyFormula(s.label)}</td><td class="num">${fmt(M[i]*1000,8)}</td><td class="num">${fmt(n)}</td><td class="num">${fmt(n*M[i]*1000)}</td><td class="num">${given!==null?fmt((given-n)*M[i]*1000):'—'}</td></tr>`});
+        return okBox(`Odczynnik limitujący: <b>${prettyFormula(L[lim])}</b> (zakładamy 100% wydajności)<div class="scroll"><table class="t"><tr><th></th><th>Związek</th><th class="num">M [g/mol]</th><th class="num">n reag. [mol]</th><th class="num">m reag. [g]</th><th class="num">nadmiar [g]</th></tr>${rows}</table></div>`)})},'Przelicz')),o);
+      stoich.append(box);
+    };
+    const go=()=>{last=null;run(out,()=>{
+      const b=balance(fi.value);last=b;
+      const term=(s,i)=>(b.coef[i]===1n?'':b.coef[i]+' ')+prettyFormula(s);
+      const lhs=b.L.map((s,i)=>term(s,i)).join(' + '),rhs=b.R.map((s,i)=>term(s,i+b.L.length)).join(' + ');
+      let chk='';
+      for(const e of b.els){let a=0n,c=0n;b.sp.forEach((s,i)=>{const k=BigInt(s.atoms[e]||0)*b.coef[i];if(i<b.L.length)a+=k;else c+=k});chk+=`<tr><td>${e}</td><td class="num">${a}</td><td class="num">${c}</td><td>${a===c?'✓':'✗'}</td></tr>`}
+      if(b.sp.some(s=>s.charge)){let a=0n,c=0n;b.sp.forEach((s,i)=>{const k=BigInt(s.charge)*b.coef[i];if(i<b.L.length)a+=k;else c+=k});chk+=`<tr><td>ładunek</td><td class="num">${a}</td><td class="num">${c}</td><td>${a===c?'✓':'✗'}</td></tr>`}
+      let mL=0,mR=0;b.sp.forEach((s,i)=>{const mq=s.electron?0:molarMassQ(s).toNumber()*Number(b.coef[i]);if(i<b.L.length)mL+=mq;else mR+=mq});
+      return okBox(`<div style="font-size:18px">${lhs} → ${rhs}</div><table class="t"><tr><th>Bilans</th><th class="num">Lewa</th><th class="num">Prawa</th><th></th></tr>${chk}</table><div class="muted">Masa: ${fmt(mL,9)} g = ${fmt(mR,9)} g (zachowana)</div>`);
+    });showStoich()};
+    fi.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+    card.append(h('label',{class:'field'},h('span',{},'Równanie (bez współczynników)'),fi),h('div',{class:'btns'},h('button',{class:'b p',onclick:go},'Zbilansuj')),out,stoich);
+  },true);
+}
+// --- pH: pełny bilans ładunku ---
+function bisectLog(f,lo=-20,hi=2){ // f rosnąca w h; szuka h=10^x
+  let a=lo,b=hi;
+  if(f(Math.pow(10,a))>0||f(Math.pow(10,b))<0) throw err('Nie znaleziono rozwiązania – sprawdź dane');
+  for(let i=0;i<200;i++){const m=(a+b)/2;if(f(Math.pow(10,m))>0)b=m;else a=m}
+  return Math.pow(10,(a+b)/2);
+}
+function phTool(){
+  return toolCard('Kalkulator pH roztworu','Dokładne rozwiązanie bilansu ładunku z autodysocjacją wody (bez przybliżeń). K<sub>a</sub> możesz wpisać jako <code>10^-4,76</code>.','ph kwas zasada stała dysocjacji pka poh',card=>{
+    const type=h('select',{},...[['sa','Mocny kwas (HCl, HNO₃…)'],['sb','Mocna zasada (NaOH, KOH…)'],['wa','Słaby kwas HA (CH₃COOH…)'],['wb','Słaba zasada B (NH₃…)'],['da','Słaby kwas dwuprotonowy H₂A']].map(([v,t])=>h('option',{value:v},t)));
+    type.value='wa';
+    const Cf=mkField('Stężenie C','conc','0,1');
+    const Kf=mkField('K<sub>a</sub> (dla zasady: K<sub>b</sub>) / K<sub>a1</sub>','one','1,75e-5');
+    const K2=mkField('K<sub>a2</sub> (tylko kwas dwuprotonowy)','one','');
+    const nf=mkField('Liczba protonów/OH⁻ w cząsteczce (mocne: np. 2 dla Ba(OH)₂)','one','1');
+    const Kw=mkField('K<sub>w</sub>','one','1e-14');
+    const out=h('div',{class:'out'});
+    card.append(h('label',{class:'field'},h('span',{},'Rodzaj substancji'),type),Cf.wrap,Kf.wrap,K2.wrap,nf.wrap,Kw.wrap,
+      h('div',{class:'btns'},h('button',{class:'b p',onclick:()=>run(out,()=>{
+        const c=Cf.get()/1000,kw=Kw.get();if(!(c>=0))throw err('Stężenie ≥ 0');
+        let H,alpha=null;const t=type.value;
+        if(t==='sa'){const ca=c*nf.get();H=(ca+Math.sqrt(ca*ca+4*kw))/2}
+        else if(t==='sb'){const cb=c*nf.get();H=2*kw/(cb+Math.sqrt(cb*cb+4*kw))}
+        else if(t==='wa'){const ka=Kf.get();H=bisectLog(h=>h-kw/h-c*ka/(ka+h));alpha=ka/(ka+H)}
+        else if(t==='wb'){const kb=Kf.get(),kc=kw/kb;H=bisectLog(h=>h+c*h/(h+kc)-kw/h);alpha=H/(H+kc)}
+        else{const k1=Kf.get(),k2=K2.get();if(!(k2>0))throw err('Podaj Ka2');H=bisectLog(h=>h-kw/h-c*(k1*h+2*k1*k2)/(h*h+k1*h+k1*k2))}
+        const OH=kw/H,pKw=-Math.log10(kw);
+        return okBox(`pH = <b>${fmt(-Math.log10(H),Math.min(SIG,8))}</b> · pOH = ${fmt(pKw+Math.log10(H),Math.min(SIG,8))}<br>[H₃O⁺] = ${fmt(H)} mol/dm³ · [OH⁻] = ${fmt(OH)} mol/dm³`+(alpha!==null?`<br>Stopień dysocjacji α = ${pct(alpha)}`:''))})},'Oblicz pH')),out);
+  });
+}
+const CHEM=[
+['Wzory i równania',[()=>molarTool(),()=>balanceTool()]],
+['Roztwory i stężenia',[
+ {name:'Liczność materii',eq:'n = m / M',tags:'mol masa molowa',
+  v:[['n','Liczność n','amount'],['m','Masa m','mass:g'],['M','Masa molowa M','molarMass']],
+  s:{n:v=>v.m/v.M,m:v=>v.n*v.M,M:v=>v.m/v.n}},
+ {name:'Stężenie molowe',eq:'C<sub>m</sub> = n / V',tags:'stężenie molowe',
+  v:[['C','Stężenie C<sub>m</sub>','conc'],['n','Liczność n','amount'],['V','Objętość V','volume:dm³']],
+  s:{C:v=>v.n/v.V,n:v=>v.C*v.V,V:v=>v.n/v.C}},
+ {name:'Stężenie molowe z masy',eq:'C<sub>m</sub> = m / (M·V)',tags:'stężenie molowe masa naważka',
+  v:[['C','Stężenie C<sub>m</sub>','conc'],['m','Masa substancji m','mass:g'],['M','Masa molowa M','molarMass'],['V','Objętość roztworu V','volume:cm³']],
+  s:{C:v=>v.m/(v.M*v.V),m:v=>v.C*v.M*v.V,M:v=>v.m/(v.C*v.V),V:v=>v.m/(v.M*v.C)}},
+ {name:'Stężenie procentowe',eq:'C<sub>p</sub> = m<sub>s</sub> / m<sub>r</sub> · 100%',tags:'stężenie procentowe',
+  v:[['Cp','Stężenie C<sub>p</sub>','pct'],['ms','Masa substancji m<sub>s</sub>','mass:g'],['mr','Masa roztworu m<sub>r</sub>','mass:g']],
+  s:{Cp:v=>v.ms/v.mr*100,ms:v=>v.Cp*v.mr/100,mr:v=>v.ms*100/v.Cp}},
+ {name:'Przeliczanie C<sub>p</sub> → C<sub>m</sub>',eq:'C<sub>m</sub> = C<sub>p</sub>·d / (100%·M)',tags:'przeliczanie stężeń gęstość',
+  v:[['Cm','Stężenie molowe C<sub>m</sub>','conc'],['Cp','Stężenie procentowe C<sub>p</sub>','pct'],['d','Gęstość roztworu d','density:g/cm³'],['M','Masa molowa M','molarMass']],
+  s:{Cm:v=>v.Cp*v.d/(100*v.M),Cp:v=>v.Cm*v.M*100/v.d,d:v=>v.Cm*v.M*100/v.Cp,M:v=>v.Cp*v.d/(100*v.Cm)}},
+ {name:'Rozcieńczanie',eq:'C<sub>1</sub>·V<sub>1</sub> = C<sub>2</sub>·V<sub>2</sub>',tags:'rozcieńczanie',
+  v:[['C1','Stężenie początkowe C<sub>1</sub>','conc'],['V1','Objętość początkowa V<sub>1</sub>','volume:cm³'],['C2','Stężenie końcowe C<sub>2</sub>','conc'],['V2','Objętość końcowa V<sub>2</sub>','volume:cm³']],
+  s:{C1:v=>v.C2*v.V2/v.V1,V1:v=>v.C2*v.V2/v.C1,C2:v=>v.C1*v.V1/v.V2,V2:v=>v.C1*v.V1/v.C2}},
+ {name:'Mieszanie roztworów (reguła krzyża)',eq:'m<sub>1</sub>·C<sub>1</sub> + m<sub>2</sub>·C<sub>2</sub> = (m<sub>1</sub>+m<sub>2</sub>)·C<sub>3</sub>',tags:'mieszanie krzyż',
+  v:[['m1','Masa roztworu 1','mass:g'],['C1','C<sub>p1</sub>','pct'],['m2','Masa roztworu 2','mass:g'],['C2','C<sub>p2</sub>','pct'],['C3','C<sub>p</sub> mieszaniny','pct']],
+  s:{C3:v=>(v.m1*v.C1+v.m2*v.C2)/(v.m1+v.m2),m1:v=>v.m2*(v.C3-v.C2)/(v.C1-v.C3),m2:v=>v.m1*(v.C1-v.C3)/(v.C3-v.C2),
+     C1:v=>((v.m1+v.m2)*v.C3-v.m2*v.C2)/v.m1,C2:v=>((v.m1+v.m2)*v.C3-v.m1*v.C1)/v.m2}},
+]],
+['Kwasy i zasady',[()=>phTool(),
+ {name:'Równanie Hendersona–Hasselbalcha (bufor)',eq:'pH = pK<sub>a</sub> + log([A⁻]/[HA])',note:'Przybliżenie dobre dla buforów o stężeniach ≫ [H₃O⁺].',tags:'bufor henderson',
+  v:[['pH','pH','one'],['pKa','pK<sub>a</sub>','one','4,76'],['A','[A⁻] (sól)','conc'],['HA','[HA] (kwas)','conc']],
+  s:{pH:v=>v.pKa+Math.log10(v.A/v.HA),pKa:v=>v.pH-Math.log10(v.A/v.HA),A:v=>v.HA*Math.pow(10,v.pH-v.pKa),HA:v=>v.A/Math.pow(10,v.pH-v.pKa)}},
+ {name:'Prawo rozcieńczeń Ostwalda',eq:'K = α²·C / (1 − α)',tags:'ostwald dysocjacja',
+  v:[['K','Stała dysocjacji K','one'],['a','Stopień dysocjacji α (0–1)','one'],['C','Stężenie C','conc']],
+  s:{K:v=>v.a*v.a*(v.C/1000)/(1-v.a),C:v=>1000*v.K*(1-v.a)/(v.a*v.a),
+     a:v=>{const c=v.C/1000;return (-v.K+Math.sqrt(v.K*v.K+4*v.K*c))/(2*c)}}},
+]],
+['Termochemia i kinetyka',[
+ {name:'Energia swobodna Gibbsa',eq:'ΔG = ΔH − T·ΔS',tags:'gibbs entalpia entropia samorzutność',
+  v:[['G','ΔG','molarE'],['H','ΔH','molarE'],['T','Temperatura T','temp','298,15'],['S','ΔS','molarS']],
+  s:{G:v=>v.H-v.T*v.S,H:v=>v.G+v.T*v.S,T:v=>(v.H-v.G)/v.S,S:v=>(v.H-v.G)/v.T},
+  after:(v,r,t)=>{const G=t==='G'?r:v.G;return `<br>${G<0?'Reakcja samorzutna (ΔG < 0)':G>0?'Reakcja niesamorzutna (ΔG > 0)':'Stan równowagi'}`}},
+ {name:'Stała równowagi a ΔG°',eq:'ΔG° = −R·T·ln K',tags:'równowaga stała',
+  v:[['G','ΔG°','molarE'],['T','Temperatura T','temp','298,15'],['K','Stała równowagi K','one']],
+  s:{G:v=>-C.R*v.T*posLog(v.K),T:v=>-v.G/(C.R*posLog(v.K)),K:v=>Math.exp(-v.G/(C.R*v.T))}},
+ {name:'Równanie Arrheniusa',eq:'k = A·e<sup>−E<sub>a</sub>/(R·T)</sup>',tags:'arrhenius energia aktywacji',
+  v:[['k','Stała szybkości k','any'],['A','Czynnik przedwykładniczy A','any'],['Ea','Energia aktywacji E<sub>a</sub>','molarE'],['T','Temperatura T','temp']],
+  s:{k:v=>v.A*Math.exp(-v.Ea/(C.R*v.T)),A:v=>v.k/Math.exp(-v.Ea/(C.R*v.T)),Ea:v=>-C.R*v.T*posLog(v.k/v.A),T:v=>-v.Ea/(C.R*posLog(v.k/v.A))}},
+ {name:'Kinetyka I rzędu',eq:'C = C<sub>0</sub>·e<sup>−k·t</sup> ,  t<sub>½</sub> = ln2 / k',tags:'kinetyka pierwszego rzędu półtrwania',
+  v:[['C','Stężenie C','any'],['C0','Stężenie początkowe C<sub>0</sub>','any'],['k','Stała szybkości k','rate1'],['t','Czas t','time']],
+  s:{C:v=>v.C0*Math.exp(-v.k*v.t),C0:v=>v.C*Math.exp(v.k*v.t),k:v=>posLog(v.C0/v.C)/v.t,t:v=>posLog(v.C0/v.C)/v.k},
+  after:(v,r,t)=>{const k=t==='k'?r:v.k;return `<br>Okres półtrwania t<sub>½</sub> = ${fmt(Math.LN2/k)} s`}},
+]],
+['Elektrochemia',[
+ {name:'Równanie Nernsta',eq:'E = E° − (R·T)/(z·F)·ln Q',tags:'nernst ogniwo potencjał',
+  v:[['E','Potencjał E [V]','voltage'],['E0','Potencjał standardowy E° [V]','voltage'],['T','Temperatura T','temp','298,15'],['z','Liczba elektronów z','one'],['Qr','Iloraz reakcji Q','one']],
+  s:{E:v=>v.E0-C.R*v.T/(v.z*C.F)*posLog(v.Qr),E0:v=>v.E+C.R*v.T/(v.z*C.F)*posLog(v.Qr),Qr:v=>Math.exp((v.E0-v.E)*v.z*C.F/(C.R*v.T)),
+     z:v=>C.R*v.T*posLog(v.Qr)/((v.E0-v.E)*C.F),T:v=>(v.E0-v.E)*v.z*C.F/(C.R*posLog(v.Qr))}},
+ {name:'Elektroliza – prawo Faradaya',eq:'m = M·I·t / (z·F)',tags:'elektroliza faraday',
+  v:[['m','Masa wydzielona m','mass:g'],['M','Masa molowa M','molarMass'],['I','Natężenie I','current'],['t','Czas t','time'],['z','Liczba elektronów z','one']],
+  s:{m:v=>v.M*v.I*v.t/(v.z*C.F),M:v=>v.m*v.z*C.F/(v.I*v.t),I:v=>v.m*v.z*C.F/(v.M*v.t),t:v=>v.m*v.z*C.F/(v.M*v.I),z:v=>v.M*v.I*v.t/(v.m*C.F)}},
+ {name:'SEM ogniwa',eq:'SEM = E<sub>katody</sub> − E<sub>anody</sub> ,  ΔG = −z·F·SEM',tags:'ogniwo sem',
+  v:[['S','SEM','voltage'],['Ek','E katody','voltage'],['Ea','E anody','voltage']],
+  s:{S:v=>v.Ek-v.Ea,Ek:v=>v.S+v.Ea,Ea:v=>v.Ek-v.S}},
+]],
+['Gazy',[
+ {name:'Równanie Clapeyrona',eq:'p·V = n·R·T',tags:'gaz doskonały',
+  v:[['p','Ciśnienie p','pressure:hPa','1013,25'],['V','Objętość V','volume:dm³'],['n','Liczność n','amount'],['T','Temperatura T','temp:°C','25']],
+  s:{p:v=>v.n*C.R*v.T/v.V,V:v=>v.n*C.R*v.T/v.p,n:v=>v.p*v.V/(C.R*v.T),T:v=>v.p*v.V/(v.n*C.R)}},
+ {name:'Gęstość gazu',eq:'d = p·M / (R·T)',tags:'gęstość gazu',
+  v:[['d','Gęstość d','density:g/dm³'],['p','Ciśnienie p','pressure:hPa','1013,25'],['M','Masa molowa M','molarMass'],['T','Temperatura T','temp:°C','0']],
+  s:{d:v=>v.p*v.M/(C.R*v.T),p:v=>v.d*C.R*v.T/v.M,M:v=>v.d*C.R*v.T/v.p,T:v=>v.p*v.M/(C.R*v.d)}},
+ {name:'Równanie van der Waalsa (gaz rzeczywisty)',eq:'(p + a·n²/V²)·(V − n·b) = n·R·T',note:'a w Pa·m⁶/mol², b w m³/mol (np. CO₂: a = 0,3640, b = 4,267·10⁻⁵).',tags:'van der waals gaz rzeczywisty',
+  v:[['p','Ciśnienie p','pressure:bar'],['V','Objętość V','volume:dm³'],['n','Liczność n','amount','1'],['T','Temperatura T','temp','300'],['a','Stała a','one','0,3640'],['b','Stała b','one','4,267e-5']],
+  s:{p:v=>v.n*C.R*v.T/(v.V-v.n*v.b)-v.a*v.n*v.n/(v.V*v.V),T:v=>(v.p+v.a*v.n*v.n/(v.V*v.V))*(v.V-v.n*v.b)/(v.n*C.R),
+     V:v=>{const f=V=>(v.p+v.a*v.n*v.n/(V*V))*(V-v.n*v.b)-v.n*C.R*v.T;let lo=v.n*v.b*(1+1e-12),hi=Math.max(10*v.n*C.R*v.T/v.p,lo*10);
+       while(f(hi)<0)hi*=2;for(let i=0;i<300;i++){const m=(lo+hi)/2;if(f(m)>0)hi=m;else lo=m}return (lo+hi)/2}}},
+]],
+];
+
+/* =====================================================================
+   9. BIOLOGIA
+   ===================================================================== */
+const CODE='FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG';
+const AA3={A:'Ala',R:'Arg',N:'Asn',D:'Asp',C:'Cys',Q:'Gln',E:'Glu',G:'Gly',H:'His',I:'Ile',L:'Leu',K:'Lys',M:'Met',F:'Phe',P:'Pro',S:'Ser',T:'Thr',W:'Trp',Y:'Tyr',V:'Val','*':'STOP'};
+const AA_MASS={A:71.0788,R:156.1875,N:114.1038,D:115.0886,C:103.1388,E:129.1155,Q:128.1307,G:57.0519,H:137.1411,I:113.1594,L:113.1594,K:128.1741,M:131.1926,F:147.1766,P:97.1167,S:87.0782,T:101.1051,W:186.2132,Y:163.1760,V:99.1326};
+function codonAA(c){const b='UCAG';const i=b.indexOf(c[0]),j=b.indexOf(c[1]),k=b.indexOf(c[2]);if(i<0||j<0||k<0)return'?';return CODE[16*i+4*j+k]}
+function translate(rna){let p='';for(let i=0;i+3<=rna.length;i+=3)p+=codonAA(rna.slice(i,i+3));return p}
+function dnaTool(){
+  return toolCard('Sekwencje DNA / RNA: komplementarność, transkrypcja, translacja','Standardowy kod genetyczny. T<sub>m</sub> i masa cząsteczkowa to wzory empiryczne (przybliżenie).','dna rna kod genetyczny translacja transkrypcja białko kodon komplementarna',card=>{
+    const ta=h('textarea',{rows:3},'ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG');
+    const kind=h('select',{},h('option',{value:'cod'},'nić kodująca (sensowna) DNA 5′→3′'),h('option',{value:'tmp'},'nić matrycowa DNA 3′→5′'),h('option',{value:'rna'},'mRNA 5′→3′'));
+    const out=h('div',{class:'out'});
+    card.append(h('label',{class:'field'},h('span',{},'Sekwencja'),ta),h('label',{class:'field'},h('span',{},'Wprowadzona sekwencja to'),kind),
+      h('div',{class:'btns'},h('button',{class:'b p',onclick:()=>run(out,()=>{
+        let s=ta.value.toUpperCase().replace(/[^A-Z]/g,'');if(!s)throw err('Pusta sekwencja');
+        const k=kind.value;
+        if(k!=='rna'&&/U/.test(s))throw err('DNA nie zawiera uracylu (U) – wybierz mRNA');
+        if(k==='rna'&&/T/.test(s))throw err('RNA nie zawiera tyminy (T)');
+        if(/[^ACGTU]/.test(s))throw err('Dozwolone tylko litery A, C, G, T/U');
+        const compD={A:'T',T:'A',G:'C',C:'G'},compR={A:'U',U:'A',G:'C',C:'G'};
+        let coding; // nić kodująca DNA 5'->3'
+        if(k==='cod')coding=s;else if(k==='tmp')coding=[...s].map(c=>compD[c]).join('');else coding=s.replace(/U/g,'T');
+        const template=[...coding].map(c=>compD[c]).join('');
+        const mrna=coding.replace(/T/g,'U');
+        const cnt=c=>[...coding].filter(x=>x===c).length;const A=cnt('A'),T=cnt('T'),G=cnt('G'),Cc=cnt('C'),N=coding.length;
+        const gc=(G+Cc)/N;
+        const tm=N<14?2*(A+T)+4*(G+Cc):64.9+41*(G+Cc-16.4)/N;
+        const mw=A*313.21+T*304.2+Cc*289.18+G*329.21-61.96;
+        const f1=translate(mrna);
+        const st=mrna.indexOf('AUG');
+        let orf='';if(st>=0){for(let i=st;i+3<=mrna.length;i+=3){const a=codonAA(mrna.slice(i,i+3));if(a==='*'){orf+='*';break}orf+=a}}
+        const prot=orf.replace(/\*$/,'');
+        const pm=prot?[...prot].reduce((s,a)=>s+AA_MASS[a],18.01528):0;
+        const three=p=>p.split('').map(a=>AA3[a]||'?').join('-');
+        return okBox(`<table class="t">
+          <tr><td>Nić kodująca 5′→3′</td><td class="mono">${coding}</td></tr>
+          <tr><td>Nić matrycowa 3′→5′</td><td class="mono">${template}</td></tr>
+          <tr><td>Odwrotnie komplementarna 5′→3′</td><td class="mono">${[...template].reverse().join('')}</td></tr>
+          <tr><td>mRNA 5′→3′</td><td class="mono">${mrna}</td></tr>
+          <tr><td>Kodony (ramka 1)</td><td class="mono">${(mrna.match(/.{1,3}/g)||[]).join(' ')}</td></tr>
+          <tr><td>Translacja ramki 1</td><td class="mono">${f1}</td></tr>
+          <tr><td>Białko od 1. AUG do STOP</td><td class="mono">${st<0?'brak kodonu START':esc(three(orf))+(orf.endsWith('*')?'':' (brak kodonu STOP)')}</td></tr>
+          <tr><td>Długość / skład</td><td>${N} nt · A ${A}, T ${T}, G ${G}, C ${Cc} · GC = ${pct(gc)}</td></tr>
+          <tr><td>T<sub>m</sub> (przybliżenie)</td><td>${fmt(tm,4)} °C <span class="muted">(${N<14?'reguła Wallace’a':'wzór Marmura–Doty’ego'})</span></td></tr>
+          <tr><td>Masa ssDNA (przybliżenie)</td><td>${fmt(mw,7)} g/mol</td></tr>
+          ${prot?`<tr><td>Masa peptydu (średnia)</td><td>${fmt(pm,7)} g/mol · ${prot.length} aminokwasów</td></tr>`:''}
+          </table>`)})},'Analizuj')),out);
+  },true);
+}
+// --- krzyżówki genetyczne ---
+function parseGenotype(s){
+  s=s.replace(/\s+/g,'');
+  if(!s||s.length%2) throw err('Genotyp musi mieć parzystą liczbę liter, np. AaBb');
+  const genes=[];
+  for(let i=0;i<s.length;i+=2){const a=s[i],b=s[i+1];
+    if(!/[A-Za-z]/.test(a)||a.toLowerCase()!==b.toLowerCase()) throw err('Para „'+a+b+'” – oba allele muszą dotyczyć tego samego genu (np. Aa)');
+    genes.push([a,b])}
+  return genes;
+}
+function gametes(genes){let g=[''];for(const [a,b] of genes){const n=[];for(const x of g){n.push(x+a);if(b!==a)n.push(x+b)}g=n}return g}
+function gametesFull(genes){let g=[''];for(const [a,b] of genes){const n=[];for(const x of g){n.push(x+a);n.push(x+b)}g=n}return g}
+function punnettTool(){
+  return toolCard('Krzyżówka genetyczna (szachownica Punnetta)','Dziedziczenie niezależne (geny niesprzężone). Wielka litera = allel dominujący. Do 5 genów.','punnett krzyżówka genetyka mendel dziedziczenie genotyp fenotyp',card=>{
+    const p1=h('input',{value:'AaBb'}),p2=h('input',{value:'AaBb'});
+    const inc=h('input',{type:'checkbox'});
+    const out=h('div',{class:'out'});
+    card.append(h('div',{class:'row'},h('label',{class:'field',style:'flex:1'},h('span',{},'Rodzic 1'),p1),h('label',{class:'field',style:'flex:1'},h('span',{},'Rodzic 2'),p2)),
+      h('label',{class:'note',style:'display:flex;gap:6px;align-items:center'},inc,'Dominacja niezupełna / kodominacja (fenotyp = genotyp)'),
+      h('div',{class:'btns'},h('button',{class:'b p',onclick:()=>run(out,()=>{
+        const g1=parseGenotype(p1.value),g2=parseGenotype(p2.value);
+        const k1=g1.map(x=>x[0].toLowerCase()).join(''),k2=g2.map(x=>x[0].toLowerCase()).join('');
+        if(k1!==k2) throw err('Rodzice muszą mieć te same geny w tej samej kolejności');
+        if(g1.length>5) throw err('Maksymalnie 5 genów');
+        const G1=gametesFull(g1),G2=gametesFull(g2);
+        const geno=new Map(),pheno=new Map();
+        const cell=(x,y)=>{let s='';for(let i=0;i<x.length;i++){const pr=[x[i],y[i]].sort();s+=pr.join('')}return s};
+        const phen=g=>{let s='';for(let i=0;i<g.length;i+=2){const A=g[i],B=g[i+1];s+=inc.checked?A+B+' ':(A===A.toUpperCase()||B===B.toUpperCase()?A.toUpperCase()+'_ ':A.toLowerCase()+A.toLowerCase()+' ')}return s.trim()};
+        for(const x of G1)for(const y of G2){const c=cell(x,y);geno.set(c,(geno.get(c)||0)+1);const p=phen(c);pheno.set(p,(pheno.get(p)||0)+1)}
+        const tot=G1.length*G2.length;
+        const tab=m=>[...m].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).map(([k,v])=>`<tr><td class="mono">${esc(k)}</td><td class="num">${fracStr(v,tot)}</td><td class="num">${pct(v/tot)}</td></tr>`).join('');
+        const ratio=m=>{const vs=[...m.values()].sort((a,b)=>b-a);const g=vs.reduce(gcdN);return vs.map(v=>v/g).join(' : ')};
+        let grid='';
+        const u1=gametes(g1),u2=gametes(g2);
+        if(u1.length<=8&&u2.length<=8){
+          grid=`<div class="scroll"><table class="punnett"><tr><th>♀ \\ ♂</th>${u2.map(x=>`<th>${esc(x)}</th>`).join('')}</tr>`+
+            u1.map(x=>`<tr><th>${esc(x)}</th>${u2.map(y=>`<td>${esc(cell(x,y))}</td>`).join('')}</tr>`).join('')+'</table></div>';
+        }
+        return okBox(`${grid}<b>Stosunek fenotypowy:</b> ${ratio(pheno)} · <b>genotypowy:</b> ${ratio(geno)}
+          <div class="row" style="flex-wrap:wrap;gap:16px"><div style="flex:1;min-width:200px"><table class="t"><tr><th>Fenotyp</th><th class="num">Ułamek</th><th class="num">%</th></tr>${tab(pheno)}</table></div>
+          <div style="flex:1;min-width:200px"><table class="t"><tr><th>Genotyp</th><th class="num">Ułamek</th><th class="num">%</th></tr>${tab(geno)}</table></div></div>`)})},'Krzyżuj')),out);
+  },true);
+}
+function hardyTool(){
+  return toolCard('Prawo Hardy’ego–Weinberga','p² + 2pq + q² = 1 ,  p + q = 1. Podaj jedną znaną częstość <b>albo</b> liczebności genotypów.','hardy weinberg populacja allele częstość',card=>{
+    const mode=h('select',{},h('option',{value:'q2'},'częstość homozygot recesywnych q² (aa)'),h('option',{value:'p2'},'częstość homozygot dominujących p² (AA)'),
+      h('option',{value:'q'},'częstość allelu recesywnego q'),h('option',{value:'p'},'częstość allelu dominującego p'),h('option',{value:'dom'},'częstość fenotypu dominującego p²+2pq'));
+    const val=mkField('Wartość (0–1, można np. 1/2500)','one','1/2500');
+    const AA=mkField('…lub liczebność AA','one',''),Aa=mkField('liczebność Aa','one',''),aa=mkField('liczebność aa','one','');
+    const out=h('div',{class:'out'});
+    card.append(h('label',{class:'field'},h('span',{},'Znana wielkość'),mode),val.wrap,AA.wrap,Aa.wrap,aa.wrap,
+      h('div',{class:'btns'},h('button',{class:'b p',onclick:()=>run(out,()=>{
+        let p,q,extra='';
+        if(!AA.empty()&&!Aa.empty()&&!aa.empty()){
+          const nAA=AA.get(),nAa=Aa.get(),naa=aa.get(),N=nAA+nAa+naa;if(!(N>0))throw err('Suma liczebności musi być > 0');
+          p=(2*nAA+nAa)/(2*N);q=1-p;
+          const e=[p*p*N,2*p*q*N,q*q*N],o=[nAA,nAa,naa];
+          let chi=0;for(let i=0;i<3;i++)if(e[i]>0)chi+=sq(o[i]-e[i])/e[i];
+          const pv=chiP(chi,1);
+          extra=`<br><b>Test χ² zgodności z równowagą</b> (df = 1): χ² = ${fmt(chi,6)}, p = ${fmt(pv,4)} → ${pv<0.05?'populacja <b>nie jest</b> w równowadze (α = 0,05)':'brak podstaw do odrzucenia równowagi (α = 0,05)'}<br>Oczekiwane: AA ${fmt(e[0],6)}, Aa ${fmt(e[1],6)}, aa ${fmt(e[2],6)}`;
+        }else{
+          const x=val.get();if(!(x>=0&&x<=1))throw err('Częstość musi być w przedziale 0–1');
+          switch(mode.value){case'q2':q=Math.sqrt(x);p=1-q;break;case'p2':p=Math.sqrt(x);q=1-p;break;case'q':q=x;p=1-q;break;case'p':p=x;q=1-p;break;case'dom':q=Math.sqrt(1-x);p=1-q;break}
+        }
+        return okBox(`<table class="t"><tr><td>p (allel A)</td><td class="num"><b>${fmt(p)}</b></td><td class="num">${pct(p)}</td></tr>
+          <tr><td>q (allel a)</td><td class="num"><b>${fmt(q)}</b></td><td class="num">${pct(q)}</td></tr>
+          <tr><td>p² (AA)</td><td class="num">${fmt(p*p)}</td><td class="num">${pct(p*p)}</td></tr>
+          <tr><td>2pq (Aa – nosiciele)</td><td class="num">${fmt(2*p*q)}</td><td class="num">${pct(2*p*q)}</td></tr>
+          <tr><td>q² (aa)</td><td class="num">${fmt(q*q)}</td><td class="num">${pct(q*q)}</td></tr></table>${extra}`)})},'Oblicz')),out);
+  });
+}
+// --- statystyka: rozkład χ² ---
+function gammaP(a,x){
+  if(x<=0)return 0;
+  if(x<a+1){let ap=a,sum=1/a,del=sum;for(let n=0;n<10000;n++){ap++;del*=x/ap;sum+=del;if(Math.abs(del)<Math.abs(sum)*1e-16)break}
+    return sum*Math.exp(-x+a*Math.log(x)-lnGamma(a))}
+  return 1-gammaQcf(a,x);
+}
+function gammaQcf(a,x){const T=1e-300;let b=x+1-a,c=1/T,d=1/b,hh=d;
+  for(let i=1;i<10000;i++){const an=-i*(i-a);b+=2;d=an*d+b;if(Math.abs(d)<T)d=T;c=b+an/c;if(Math.abs(c)<T)c=T;d=1/d;const del=d*c;hh*=del;if(Math.abs(del-1)<1e-16)break}
+  return Math.exp(-x+a*Math.log(x)-lnGamma(a))*hh}
+function chiP(chi,df){const a=df/2,x=chi/2;if(x<=0)return 1;return x<a+1?1-gammaP(a,x):gammaQcf(a,x)}
+function chiCrit(df,alpha){let lo=0,hi=Math.max(10,df*10);while(chiP(hi,df)>alpha)hi*=2;for(let i=0;i<200;i++){const m=(lo+hi)/2;if(chiP(m,df)>alpha)lo=m;else hi=m}return (lo+hi)/2}
+function chiTool(){
+  return toolCard('Test χ² (chi-kwadrat) zgodności','Np. czy wynik krzyżówki zgadza się z proporcją 9:3:3:1. p-wartość liczona dokładnie z rozkładu χ².','chi kwadrat test statystyka krzyżówka zgodność',card=>{
+    const o=h('input',{value:'315 108 101 32'}),e=h('input',{value:'9 3 3 1'});
+    const out=h('div',{class:'out'});
+    card.append(h('label',{class:'field'},h('span',{},'Liczebności obserwowane'),o),h('label',{class:'field'},h('span',{},'Oczekiwana proporcja (lub liczebności)'),e),
+      h('div',{class:'btns'},h('button',{class:'b p',onclick:()=>run(out,()=>{
+        const O=splitList(o.value).map(readNum),R=splitList(e.value).map(readNum);
+        if(O.length<2||O.length!==R.length)throw err('Podaj tyle samo (≥ 2) wartości obserwowanych i oczekiwanych');
+        const N=O.reduce((a,b)=>a+b,0),SR=R.reduce((a,b)=>a+b,0);
+        if(R.some(r=>r<=0))throw err('Wartości oczekiwane muszą być > 0');
+        const E=R.map(r=>r/SR*N);let chi=0;O.forEach((x,i)=>chi+=sq(x-E[i])/E[i]);
+        const df=O.length-1,pv=chiP(chi,df);
+        const rows=O.map((x,i)=>`<tr><td class="num">${fmt(x)}</td><td class="num">${fmt(E[i],6)}</td><td class="num">${fmt(sq(x-E[i])/E[i],6)}</td></tr>`).join('');
+        return okBox(`χ² = <b>${fmt(chi,6)}</b> · df = ${df} · p = <b>${fmt(pv,5)}</b><br>Wartość krytyczna (α = 0,05): ${fmt(chiCrit(df,0.05),6)} → ${pv<0.05?'<b>odrzucamy</b> hipotezę zgodności':'<b>brak podstaw</b> do odrzucenia hipotezy zgodności'}`+
+          (E.some(x=>x<5)?'<br><span class="muted">Uwaga: część liczebności oczekiwanych < 5 – test może być niewiarygodny.</span>':'')+
+          `<table class="t"><tr><th class="num">Obserwowane</th><th class="num">Oczekiwane</th><th class="num">(O−E)²/E</th></tr>${rows}</table>`)})},'Testuj')),out);
+  });
+}
+function diversityTool(){
+  return toolCard('Różnorodność biologiczna','Wskaźnik Shannona H′, równomierność Pielou J′, wskaźnik Simpsona. Podaj liczebności osobników poszczególnych gatunków.','shannon simpson różnorodność bioróżnorodność ekologia',card=>{
+    const o=h('input',{value:'40 25 15 10 10'});const out=h('div',{class:'out'});
+    card.append(h('label',{class:'field'},h('span',{},'Liczebności gatunków'),o),h('div',{class:'btns'},h('button',{class:'b p',onclick:()=>run(out,()=>{
+      const n=splitList(o.value).map(readNum).filter(x=>x>0);if(!n.length)throw err('Podaj liczebności');
+      const N=n.reduce((a,b)=>a+b,0),S=n.length;
+      const H=-n.reduce((s,x)=>s+(x/N)*Math.log(x/N),0);
+      const D=N>1?n.reduce((s,x)=>s+x*(x-1),0)/(N*(N-1)):NaN;
+      return okBox(`Liczba gatunków S = ${S}, osobników N = ${fmt(N)}<br>Shannon H′ = <b>${fmt(H,6)}</b> (ln) · H<sub>max</sub> = ${fmt(Math.log(S),6)} · Pielou J′ = ${S>1?fmt(H/Math.log(S),6):'—'}<br>Simpson D = ${fmt(D,6)} · 1 − D = <b>${fmt(1-D,6)}</b> · 1/D = ${fmt(1/D,6)}`)})},'Oblicz')),out);
+  });
+}
+const BIO=[
+['Genetyka',[()=>punnettTool(),()=>hardyTool(),()=>chiTool(),()=>dnaTool()]],
+['Populacje i ekologia',[
+ {name:'Wzrost wykładniczy',eq:'N = N<sub>0</sub>·e<sup>r·t</sup>',tags:'populacja wzrost wykładniczy',
+  v:[['N','Liczebność N','one'],['N0','Liczebność początkowa N<sub>0</sub>','one'],['r','Tempo wzrostu r','rate1:1/doba'],['t','Czas t','time:doba']],
+  s:{N:v=>v.N0*Math.exp(v.r*v.t),N0:v=>v.N/Math.exp(v.r*v.t),r:v=>posLog(v.N/v.N0)/v.t,t:v=>posLog(v.N/v.N0)/v.r},
+  after:(v,r,t)=>{const rr=t==='r'?r:v.r;return `<br>Czas podwojenia = ${fmt(Math.LN2/rr)} s = ${fmt(Math.LN2/rr/86400)} doby`}},
+ {name:'Wzrost logistyczny',eq:'N = K / (1 + ((K − N<sub>0</sub>)/N<sub>0</sub>)·e<sup>−r·t</sup>)',tags:'populacja logistyczny pojemność środowiska',
+  v:[['N','Liczebność N','one'],['N0','Liczebność początkowa N<sub>0</sub>','one'],['K','Pojemność środowiska K','one'],['r','Tempo wzrostu r','rate1:1/doba'],['t','Czas t','time:doba']],
+  s:{N:v=>v.K/(1+((v.K-v.N0)/v.N0)*Math.exp(-v.r*v.t)),
+     t:v=>posLog((v.K-v.N0)*v.N/(v.N0*(v.K-v.N)),'Brak rozwiązania – N musi leżeć między N₀ a K')/v.r,
+     r:v=>posLog((v.K-v.N0)*v.N/(v.N0*(v.K-v.N)),'Brak rozwiązania – N musi leżeć między N₀ a K')/v.t,
+     K:v=>{const E=Math.exp(-v.r*v.t);return v.N*v.N0*(E-1)/(v.N*E-v.N0)},
+     N0:v=>{const E=Math.exp(-v.r*v.t);return v.N*v.K*E/(v.K+v.N*E-v.N)}}},
+ {name:'Podziały komórek / bakterii',eq:'N = N<sub>0</sub>·2<sup>t / t<sub>d</sub></sup>',tags:'bakterie podział czas generacji',
+  v:[['N','Liczba komórek N','one'],['N0','Liczba początkowa N<sub>0</sub>','one'],['t','Czas t','time:h'],['td','Czas generacji t<sub>d</sub>','time:min','20']],
+  s:{N:v=>v.N0*Math.pow(2,v.t/v.td),N0:v=>v.N/Math.pow(2,v.t/v.td),t:v=>v.td*Math.log2(v.N/v.N0),td:v=>v.t/Math.log2(v.N/v.N0)},
+  after:(v,r,t)=>{const N=t==='N'?r:v.N,N0=t==='N0'?r:v.N0;return `<br>Liczba pokoleń n = ${fmt(Math.log2(N/N0))}`}},
+ {name:'Metoda złowienia–ponownego złowienia (Lincoln–Petersen)',eq:'N = M·C / R',tags:'liczebność populacji znakowanie',
+  v:[['N','Szacowana liczebność N','one'],['M','Oznakowane w 1. połowie M','one'],['Cc','Złowione w 2. połowie C','one'],['R','Oznakowane wśród nich R','one']],
+  s:{N:v=>v.M*v.Cc/v.R,M:v=>v.N*v.R/v.Cc,Cc:v=>v.N*v.R/v.M,R:v=>v.M*v.Cc/v.N},
+  after:(v,r,t)=>t==='N'?`<br>Estymator Chapmana (mniej obciążony): ${fmt((v.M+1)*(v.Cc+1)/(v.R+1)-1)}`:''},
+ {name:'Zagęszczenie populacji',eq:'D = N / S',tags:'zagęszczenie',
+  v:[['D','Zagęszczenie D [osobn./m²]','one'],['N','Liczebność N','one'],['S','Powierzchnia S','area']],
+  s:{D:v=>v.N/v.S,N:v=>v.D*v.S,S:v=>v.N/v.D}},
+ ()=>diversityTool(),
+]],
+['Biochemia i fizjologia',[
+ {name:'Kinetyka Michaelisa–Menten',eq:'v = V<sub>max</sub>·[S] / (K<sub>M</sub> + [S])',tags:'enzym michaelis menten kinetyka',
+  v:[['v','Szybkość v','any'],['Vm','V<sub>max</sub>','any'],['S','[S] substrat','conc:mmol/dm³'],['Km','K<sub>M</sub>','conc:mmol/dm³']],
+  s:{v:v=>v.Vm*v.S/(v.Km+v.S),Vm:v=>v.v*(v.Km+v.S)/v.S,S:v=>{if(v.v>=v.Vm)throw err('v musi być < Vmax');return v.v*v.Km/(v.Vm-v.v)},Km:v=>v.S*(v.Vm-v.v)/v.v}},
+ {name:'Potencjał równowagi jonu (Nernst)',eq:'E = (R·T)/(z·F)·ln([X]<sub>zew</sub>/[X]<sub>wew</sub>)',tags:'potencjał błonowy spoczynkowy nernst neuron',
+  v:[['E','Potencjał E','voltage:mV'],['z','Wartościowość jonu z','one','1'],['T','Temperatura T','temp:°C','37'],['Co','[X] na zewnątrz','conc:mmol/dm³','5'],['Ci','[X] wewnątrz','conc:mmol/dm³','140']],
+  s:{E:v=>C.R*v.T/(v.z*C.F)*posLog(v.Co/v.Ci),Co:v=>v.Ci*Math.exp(v.E*v.z*C.F/(C.R*v.T)),Ci:v=>v.Co/Math.exp(v.E*v.z*C.F/(C.R*v.T)),
+     z:v=>C.R*v.T*posLog(v.Co/v.Ci)/(v.E*C.F),T:v=>v.E*v.z*C.F/(C.R*posLog(v.Co/v.Ci))}},
+ {name:'Ciśnienie osmotyczne (van ’t Hoff)',eq:'π = i·C·R·T',tags:'osmoza osmotyczne izotoniczny',
+  v:[['p','Ciśnienie osmotyczne π','pressure:kPa'],['i','Współczynnik van ’t Hoffa i','one','1'],['Cc','Stężenie C','conc'],['T','Temperatura T','temp:°C','37']],
+  s:{p:v=>v.i*v.Cc*C.R*v.T,i:v=>v.p/(v.Cc*C.R*v.T),Cc:v=>v.p/(v.i*C.R*v.T),T:v=>v.p/(v.i*v.Cc*C.R)}},
+ {name:'Wskaźnik masy ciała BMI',eq:'BMI = m / h²',tags:'bmi masa ciała',
+  v:[['B','BMI [kg/m²]','one'],['m','Masa ciała m','mass'],['h','Wzrost h','length:cm']],
+  s:{B:v=>v.m/(v.h*v.h),m:v=>v.B*v.h*v.h,h:v=>sqrtS(v.m/v.B)},
+  after:(v,r,t)=>{const B=t==='B'?r:v.B;return `<br>Kategoria WHO: ${B<18.5?'niedowaga':B<25?'masa prawidłowa':B<30?'nadwaga':'otyłość'}`}},
+ {name:'Powiększenie mikroskopu',eq:'P = P<sub>ob</sub>·P<sub>ok</sub>',tags:'mikroskop powiększenie',
+  v:[['P','Powiększenie całkowite','one'],['Pob','Obiektyw','one','40'],['Pok','Okular','one','10']],
+  s:{P:v=>v.Pob*v.Pok,Pob:v=>v.P/v.Pok,Pok:v=>v.P/v.Pob}},
+ {name:'Wielkość rzeczywista obiektu',eq:'rzeczywista = obraz / powiększenie',tags:'skala rysunku mikroskop',
+  v:[['r','Rozmiar rzeczywisty','length:µm'],['o','Rozmiar na obrazie','length:mm'],['P','Powiększenie','one']],
+  s:{r:v=>v.o/v.P,o:v=>v.r*v.P,P:v=>v.o/v.r}},
+]],
+];
+
+/* =====================================================================
+   10. KALKULATOR – UI
+   ===================================================================== */
+const exprEl=document.getElementById('expr'),disp=document.getElementById('disp'),histEl=document.getElementById('hist');
+const hist=[];
+function showValue(v){
+  if(isQ(v)){
+    const ln=blen(v.n);
+    if(v.isInt()){
+      const str=(v.n<0n?'−':'')+groupInt(BABS(v.n).toString());
+      return `<div class="big">${ln<=40?str:fmt(v,15)}</div><div class="line"><span class="pill ex">dokładnie</span>${ln>40?` liczba ${ln}-cyfrowa:<br><span class="mono">${str}</span>`:''}</div>`;
+    }
+    const dec=v.toDecimal(80);
+    const frac=(v.n<0n?'−':'')+groupInt(BABS(v.n).toString())+' / '+groupInt(v.d.toString());
+    return `<div class="big">${dec.length<=32?dec:fmt(v)}</div><div class="line"><span class="pill ex">dokładnie</span> = <span class="mono">${frac}</span></div>
+      <div class="line">rozwinięcie: <span class="mono">${dec}</span></div>`;
+  }
+  return `<div class="big">${fmt(v)}</div><div class="line"><span class="pill">≈ podwójna precyzja</span> pełny zapis: <span class="mono">${String(v).replace('.',',')}</span></div>`;
+}
+function calcEval(){
+  const src=exprEl.value.trim();if(!src)return;
+  try{
+    let m=/^([A-Za-z_][A-Za-z_0-9]*)\s*=(?!=)(.*)$/.exec(src),v;
+    if(m){
+      if(CONSTV[m[1]]!==undefined||FUNCS[m[1]]||m[1]==='ans')throw err('Nie można nadpisać nazwy „'+m[1]+'”');
+      v=evaluate(m[2]);VARS.set(m[1],v);
+    }else v=evaluate(src);
+    VARS.set('ans',v);
+    disp.innerHTML=(m?`<div class="line">${esc(m[1])} =</div>`:'')+showValue(v);
+    hist.unshift({src,res:isQ(v)&&v.isInt()&&blen(v.n)<=30?v.n.toString():fmt(v,12).replace(' × 10<sup>','·10^').replace('</sup>','')});
+    if(hist.length>60)hist.pop();
+    histEl.innerHTML='';hist.forEach(hh=>histEl.append(h('div',{title:'Kliknij, aby wstawić',onclick:()=>{exprEl.value=hh.src;exprEl.focus()}},hh.src+'  =  '+hh.res)));
+  }catch(e){disp.innerHTML=errBox(e instanceof CalcError?e.message:'Błąd: '+e.message);if(!(e instanceof CalcError))console.error(e)}
+}
+exprEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();calcEval()}});
+document.getElementById('clr').onclick=()=>{exprEl.value='';disp.innerHTML='<span class="muted">Wpisz wyrażenie i naciśnij Enter.</span>';exprEl.focus()};
+document.getElementById('angle').onclick=e=>{DEG=!DEG;e.currentTarget.innerHTML='Kąty: <b>'+(DEG?'stopnie':'radiany')+'</b>'};
+const KEYS=[['7'],['8'],['9'],['/','op','÷'],['(','op'],[')','op'],
+ ['4'],['5'],['6'],['*','op','×'],['^','op','xʸ'],['sqrt(','op','√'],
+ ['1'],['2'],['3'],['-','op','−'],['!','op','n!'],['ln(','op','ln'],
+ ['0'],[',',null,','],['e',null,'e'],['+','op','+'],['pi',null,'π'],['log(','op','log'],
+ ['sin(','op','sin'],['cos(','op','cos'],['tan(','op','tan'],['nCr(','op','nCr'],[';','op',';'],['exp(','op','eˣ'],
+ ['ans',null,'ans'],['⌫','del','⌫'],['AC','ac','AC'],['10^','op','10ˣ'],['^2','op','x²'],['=','eqk','=']];
+const keysEl=document.getElementById('keys');
+for(const [k,cls,lab] of KEYS){
+  keysEl.append(h('button',{class:cls||'',onclick:()=>{
+    if(k==='=')return calcEval();
+    if(k==='AC'){exprEl.value='';return exprEl.focus()}
+    const s=exprEl.selectionStart??exprEl.value.length,en=exprEl.selectionEnd??s;
+    if(k==='⌫'){if(s===en&&s>0){exprEl.value=exprEl.value.slice(0,s-1)+exprEl.value.slice(en);exprEl.setSelectionRange(s-1,s-1)}else{exprEl.value=exprEl.value.slice(0,s)+exprEl.value.slice(en);exprEl.setSelectionRange(s,s)}return exprEl.focus()}
+    exprEl.value=exprEl.value.slice(0,s)+k+exprEl.value.slice(en);exprEl.setSelectionRange(s+k.length,s+k.length);exprEl.focus();
+  }},lab||k));
+}
+// --- analiza funkcji ---
+function compileF(src){
+  let s=src;const eqI=s.indexOf('=');
+  if(eqI>=0)s='('+s.slice(0,eqI)+')-('+s.slice(eqI+1)+')';
+  const ast=parse(s);
+  try{evalAst(ast,{x:0.5})}catch(e){if(/^Nieznana|^Funkcja/.test(e.message))throw e}
+  return x=>{try{const r=toNum(evalAst(ast,{x}));return Number.isFinite(r)?r:NaN}catch(e){return NaN}};
+}
+let multi=new Set();
+function findRoots(f,a,b){
+  const N=20000,roots=[];multi=new Set();let x0=a,f0=f(a);
+  const refine=(lo,hi,flo)=>{for(let i=0;i<200;i++){const m=(lo+hi)/2;if(m===lo||m===hi)break;const fm=f(m);if(fm===0)return m;if((fm<0)===(flo<0)){lo=m;flo=fm}else hi=m}return (lo+hi)/2};
+  for(let i=1;i<=N;i++){
+    const x1=a+(b-a)*i/N,f1=f(x1);
+    if(f0===0)roots.push(x0);
+    else if(Number.isFinite(f0)&&Number.isFinite(f1)&&(f0<0)!==(f1<0)&&f1!==0){
+      const r=refine(x0,x1,f0);const fr=f(r);
+      if(Math.abs(fr)<1e-6*(1+Math.abs(f0)+Math.abs(f1))) roots.push(r); // odrzuca bieguny (zmiana znaku przez ∞)
+    }
+    else if(Number.isFinite(f0)&&Number.isFinite(f1)&&i>1){ // pierwiastki podwójne (styczne): minimum |f|
+      const xm=x0-(b-a)/N,fm=f(xm);
+      if(Math.abs(f0)<Math.abs(fm)&&Math.abs(f0)<Math.abs(f1)&&(fm<0)===(f0<0)&&(f1<0)===(f0<0)){
+        let lo=xm,hi=x1;for(let k=0;k<200;k++){const m1=lo+(hi-lo)/3,m2=hi-(hi-lo)/3;if(Math.abs(f(m1))<Math.abs(f(m2)))hi=m2;else lo=m1}
+        const r=(lo+hi)/2;if(Math.abs(f(r))<1e-12*(1+Math.abs(fm))){roots.push(r);multi.add(r)}
+      }
+    }
+    x0=x1;f0=f1;
+  }
+  if(f0===0)roots.push(x0);
+  const u=[];for(const r of roots.sort((p,q)=>p-q))if(!u.length||Math.abs(r-u[u.length-1])>1e-9*(1+Math.abs(r)))u.push(r);
+  return u;
+}
+const GK=[[0,0.209482141084727828012999174891714],[0.207784955007898467600689403773245,0.204432940075298892414161999234649],[0.405845151377397166906606412076961,0.190350578064785409913256402421014],[0.586087235467691130294144845693013,0.169004726639267902826583426598550],[0.741531185599394439863864773280788,0.140653259715525918745189590510238],[0.864864423359769072789712788640926,0.104790010322250183839876322541518],[0.949107912342758524526189684047851,0.063092092629978553290700663189204],[0.991455371120812639206854697526329,0.022935322010529224963732008058970]];
+const GW=[0.417959183673469387755102040816327,0.381830050505118944950369775488975,0.279705391489276667901467771423780,0.129484966168869693270611432679082];
+function gk15(f,a,b){const c=(a+b)/2,hl=(b-a)/2;let k=GK[0][1]*f(c),g=GW[0]*f(c);
+  for(let i=1;i<8;i++){const x=hl*GK[i][0],f1=f(c-x),f2=f(c+x);k+=GK[i][1]*(f1+f2);if(i%2===0)g+=GW[i/2]*(f1+f2)}
+  return[k*hl,Math.abs((k-g)*hl)]}
+function integrate(f,a,b){
+  let segs=[[a,b,...gk15(f,a,b)]];
+  for(let it=0;it<2000;it++){
+    const tot=segs.reduce((s,x)=>s+x[2],0),errT=segs.reduce((s,x)=>s+x[3],0);
+    if(!Number.isFinite(tot))throw err('Całka rozbieżna lub funkcja nieokreślona w przedziale');
+    if(errT<=Math.max(1e-14,1e-13*Math.abs(tot)))return[tot,errT];
+    let wi=0;segs.forEach((s,i)=>{if(s[3]>segs[wi][3])wi=i});
+    const [x0,x1]=segs[wi],m=(x0+x1)/2;segs.splice(wi,1,[x0,m,...gk15(f,x0,m)],[m,x1,...gk15(f,m,x1)]);
+  }
+  const tot=segs.reduce((s,x)=>s+x[2],0);return[tot,segs.reduce((s,x)=>s+x[3],0)];
+}
+function deriv(f,x){ // ekstrapolacja Richardsona
+  let hh=Math.max(1e-2,Math.abs(x)*1e-2);const T=[];let best=null,bestErr=Infinity;
+  for(let i=0;i<10;i++){T[i]=[(f(x+hh)-f(x-hh))/(2*hh)];
+    for(let j=1;j<=i;j++){T[i][j]=T[i][j-1]+(T[i][j-1]-T[i-1][j-1])/(Math.pow(4,j)-1);
+      const e=Math.abs(T[i][j]-T[i-1][j-1]);if(e<bestErr){bestErr=e;best=T[i][j]}}
+    hh/=2}
+  return best??T[0][0];
+}
+const fout=document.getElementById('fout');
+document.getElementById('roots').onclick=()=>run(fout,()=>{
+  const f=compileF(document.getElementById('fx').value),a=readNum(document.getElementById('fa').value),b=readNum(document.getElementById('fb').value);
+  if(!(b>a))throw err('Musi być a < b');
+  const r=findRoots(f,a,b);
+  if(!r.length)return okBox('Brak miejsc zerowych w podanym przedziale (lub funkcja nie zmienia tam znaku).');
+  return okBox(`Znaleziono ${r.length}: `+r.map(x=>`<br>x = <b>${fmt(Math.abs(x)<1e-14?0:x,multi.has(x)?7:Math.max(SIG,12))}</b> <span class="muted">(f(x) = ${fmt(f(x),3)}${multi.has(x)?'; pierwiastek wielokrotny – dokładność ok. 7 cyfr':''})</span>`).join(''));
+});
+document.getElementById('integ').onclick=()=>run(fout,()=>{
+  const f=compileF(document.getElementById('fx').value),a=readNum(document.getElementById('fa').value),b=readNum(document.getElementById('fb').value);
+  const [v,e]=integrate(f,a,b);return okBox(`∫ f(x) dx od ${fmt(a)} do ${fmt(b)} = <b>${fmt(v,Math.max(SIG,12))}</b> <span class="muted">(szac. błąd ${fmt(e,2)})</span>`);
+});
+document.getElementById('deriv').onclick=()=>run(fout,()=>{
+  const f=compileF(document.getElementById('fx').value),x=readNum(document.getElementById('fx0').value);
+  const fx=f(x);if(!Number.isFinite(fx))throw err('f nieokreślona w x₀');
+  const d1=deriv(f,x),d2=deriv(t=>deriv(f,t),x);
+  return okBox(`f(${fmt(x)}) = <b>${fmt(fx)}</b><br>f′(${fmt(x)}) ≈ <b>${fmt(d1,Math.min(SIG,11))}</b><br>f″(${fmt(x)}) ≈ ${fmt(d2,Math.min(SIG,7))}`);
+});
+
+/* =====================================================================
+   11. JEDNOSTKI I STAŁE – UI
+   ===================================================================== */
+(function unitsUI(){
+  const root=document.getElementById('units');
+  const card=h('div',{class:'card'});
+  const dimSel=h('select',{});for(const d in UNITS)dimSel.append(h('option',{value:d},UNITS[d].name));
+  const val=h('input',{value:'1'}),from=h('select',{});const out=h('div',{class:'out'});
+  const fill=()=>{from.innerHTML='';UNITS[dimSel.value].u.forEach((u,i)=>from.append(h('option',{value:i},u.sym)));upd()};
+  const upd=()=>run(out,()=>{const x=readNum(val.value),U0=UNITS[dimSel.value].u,u=U0[from.value];const si=(x+u.o)*u.f;
+    return `<table class="t">${U0.map(w=>`<tr><td>${esc(w.sym)}</td><td class="num"><b>${fmt(si/w.f-w.o,Math.max(SIG,10))}</b></td></tr>`).join('')}</table>`});
+  dimSel.onchange=fill;val.oninput=upd;from.onchange=upd;
+  card.append(h('h2',{},'Przelicznik jednostek'),h('div',{class:'row',style:'flex-wrap:wrap'},
+    h('label',{class:'field',style:'flex:1;min-width:160px'},h('span',{},'Wielkość'),dimSel),
+    h('label',{class:'field',style:'flex:1;min-width:120px'},h('span',{},'Wartość'),val),
+    h('label',{class:'field',style:'flex:0 0 auto'},h('span',{},'Jednostka'),from)),out,
+    h('p',{class:'note'},'Współczynniki dokładne z definicji (np. 1 in = 0,0254 m, 1 cal = 4,184 J, 1 atm = 101 325 Pa). Rok = 365,25 doby.'));
+  root.append(card);fill();
+})();
+(function constUI(){
+  const root=document.getElementById('consts');
+  const rows=CONST_TABLE.map(([k,name,sym,unit,exact,unc])=>{
+    const v=CONSTV[k];
+    const shown=isQ(v)?(v.isInt()?groupInt(v.n.toString()):fmt(v,15)):fmt(v,15);
+    return `<tr><td>${sym}</td><td>${name}</td><td class="num">${shown}</td><td>${unit}</td><td>${exact?'<span class="pill ex">dokładna</span>':'<span class="muted">±'+unc+'</span>'}</td><td><code>${k}</code></td></tr>`}).join('');
+  root.append(h('div',{class:'card',html:`<h2>Stałe fizyczne (CODATA 2022)</h2><p class="note">Nazwę z ostatniej kolumny możesz wpisać w kalkulatorze, np. <code>me*c^2</code>. Kliknij wiersz, aby przenieść ją do kalkulatora.</p>
+    <div class="scroll"><table class="t" id="ctab"><tr><th>Symbol</th><th>Nazwa</th><th class="num">Wartość</th><th>Jednostka</th><th>Niepewność</th><th>W kalkulatorze</th></tr>${rows}</table></div>`}));
+  document.querySelectorAll('#ctab tr').forEach((tr,i)=>{if(!i)return;tr.style.cursor='pointer';tr.onclick=()=>{exprEl.value+=CONST_TABLE[i-1][0];switchTab('calc');exprEl.focus()}});
+  // układ okresowy – masy
+  const els=Object.keys(ATOMIC);
+  root.append(h('div',{class:'card',style:'margin-top:12px',html:`<h2>Standardowe masy atomowe (IUPAC)</h2><p class="note">W nawiasach kwadratowych – pierwiastki bez stabilnych izotopów (liczba masowa najtrwalszego izotopu).</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px">${els.map((e,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:4px 6px"><div class="muted" style="font-size:11px">${i+1}</div><b>${e}</b><div style="font-size:12px">${/\./.test(ATOMIC[e])?ATOMIC[e]:'['+ATOMIC[e]+']'}</div></div>`).join('')}</div>`}));
+})();
+
+/* =====================================================================
+   12. NAWIGACJA, WYSZUKIWANIE, USTAWIENIA
+   ===================================================================== */
+renderSection('phys',PHYS);renderSection('chem',CHEM);renderSection('bio',BIO);
+function switchTab(t){
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id==='tab-'+t));
+  try{localStorage.setItem('uk-tab',t)}catch(e){}
+}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+document.querySelectorAll('.search').forEach(inp=>inp.addEventListener('input',()=>{
+  const q=inp.value.trim().toLowerCase(),root=document.getElementById(inp.dataset.for);
+  root.querySelectorAll('.card[data-s]').forEach(c=>c.style.display=!q||c.dataset.s.includes(q)?'':'none');
+  root.querySelectorAll('.grid').forEach(g=>{const any=[...g.children].some(c=>c.style.display!=='none');g.style.display=any?'':'none';g.previousElementSibling.style.display=any?'':'none'});
+}));
+const sigSel=document.getElementById('sig');
+sigSel.onchange=()=>{SIG=+sigSel.value;try{localStorage.setItem('uk-sig',SIG)}catch(e){}};
+document.getElementById('theme').onclick=()=>{
+  const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const nx=cur==='dark'?'light':'dark';document.documentElement.dataset.theme=nx;try{localStorage.setItem('uk-theme',nx)}catch(e){}
+};
+try{const t=localStorage.getItem('uk-theme');if(t)document.documentElement.dataset.theme=t;
+  const s=localStorage.getItem('uk-sig');if(s){SIG=+s;sigSel.value=s}
+  const tb=localStorage.getItem('uk-tab');if(tb&&document.getElementById('tab-'+tb))switchTab(tb)}catch(e){}
+</script>
+</body>
+</html>
