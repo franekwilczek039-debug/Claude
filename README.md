@@ -41,3 +41,23 @@ dostajesz prezent 🎁 z liścikiem, a po 3. poziomie jest wielki finał.
 
 **Personalizacja:** otwórz plik w Notatniku, naciśnij Ctrl+F i wyszukaj `USTAWIENIA`.
 Zmieniasz tam `name`, `from`, liściki (`notes`), wiadomość końcową (`finalMessage`) i nagrodę (`prize`).
+
+---
+
+# 🧮 Ultra Kalkulator Naukowy
+
+Kalkulator fizyczny, chemiczny i biologiczny w jednym pliku: `ultra-kalkulator.html`.
+Działa offline w każdej nowoczesnej przeglądarce (dwuklik na pliku).
+
+- **Kalkulator dokładny** – ułamki i liczby dziesiętne liczone bez zaokrągleń (`0,1+0,2` = dokładnie 3/10,
+  `1/7` = 0,(142857), `100!` w całości), funkcje, stałe CODATA 2022, zmienne, miejsca zerowe, całki, pochodne.
+- **Fizyka** – ok. 45 wzorów (kinematyka, dynamika, grawitacja, fale, termodynamika, elektryczność, optyka,
+  fizyka współczesna), rzut ukośny, łączenie oporników. W każdym wzorze zostaw puste jedno pole.
+- **Chemia** – masa molowa i skład %, bilansowanie równań (także jonowych i redoks) ze stechiometrią
+  i odczynnikiem limitującym, dokładny kalkulator pH, stężenia, termochemia, kinetyka, elektrochemia, gazy.
+- **Biologia** – krzyżówki genetyczne (Punnett), Hardy–Weinberg, test χ², DNA/RNA (transkrypcja, translacja),
+  wzrost populacji, różnorodność, Michaelis–Menten, potencjał Nernsta, osmoza.
+- **Jednostki** i **tablica stałych** oraz mas atomowych.
+
+Zakładka „Jak to działa” opisuje, co jest liczone dokładnie, a co w podwójnej precyzji (ok. 15–16 cyfr),
+oraz które wzory są przybliżeniami empirycznymi.
