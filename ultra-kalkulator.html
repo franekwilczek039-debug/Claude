@@ -250,7 +250,7 @@ class Q{
   sign(){return this.n<0n?-1:this.n>0n?1:0}
   cmp(o){const x=this.n*o.d-o.n*this.d;return x<0n?-1:x>0n?1:0}
   powInt(k){ // k: BigInt; zwraca null gdy wynik byłby gigantyczny
-    if(k===0n){if(this.n===0n)throw err('0^0 jest nieokreślone');return Q.of(1)}
+    if(k===0n)return Q.of(1); // umowa 0^0 = 1 (jak w Pythonie, JavaScript i większości kalkulatorów)
     const size=(blen(this.n)+blen(this.d))*Number(BABS(k));
     if(size>200000) return null;
     if(k<0n){if(this.n===0n)throw err('Dzielenie przez zero');return new Q(this.d**(-k),this.n**(-k))}
@@ -1513,27 +1513,51 @@ function compileF(src){
   return x=>{try{const r=toNum(evalAst(ast,{x}));return Number.isFinite(r)?r:NaN}catch(e){return NaN}};
 }
 let multi=new Set();
-function findRoots(f,a,b){
-  const N=20000,roots=[];multi=new Set();let x0=a,f0=f(a);
+function findRoots(f,A,B){
+  const roots=[];multi=new Set();
   const refine=(lo,hi,flo)=>{for(let i=0;i<200;i++){const m=(lo+hi)/2;if(m===lo||m===hi)break;const fm=f(m);if(fm===0)return m;if((fm<0)===(flo<0)){lo=m;flo=fm}else hi=m}return (lo+hi)/2};
-  for(let i=1;i<=N;i++){
-    const x1=a+(b-a)*i/N,f1=f(x1);
-    if(f0===0)roots.push(x0);
-    else if(Number.isFinite(f0)&&Number.isFinite(f1)&&(f0<0)!==(f1<0)&&f1!==0){
-      const r=refine(x0,x1,f0);const fr=f(r);
-      if(Math.abs(fr)<1e-6*(1+Math.abs(f0)+Math.abs(f1))) roots.push(r); // odrzuca bieguny (zmiana znaku przez ∞)
+  const fin=Number.isFinite;
+  // skan siatką; przy każdym ekstremum lokalnym (bez zmiany znaku) rekurencyjne zagęszczenie,
+  // dzięki czemu wykrywane są także pierwiastki leżące bardzo blisko siebie
+  function scan(a,b,N,depth){
+    const xs=new Array(N+1),fs=new Array(N+1);
+    for(let i=0;i<=N;i++){xs[i]=a+(b-a)*i/N;fs[i]=f(xs[i])}
+    for(let i=0;i<=N;i++){
+      const f0=fs[i];
+      if(f0===0){roots.push(xs[i]);if(depth>0&&i>0&&i<N)scan(xs[i-1],xs[i+1],40,depth-1);continue}
+      if(i<N){const f1=fs[i+1];
+        if(fin(f0)&&fin(f1)&&f1!==0&&(f0<0)!==(f1<0)){
+          const r=refine(xs[i],xs[i+1],f0);
+          if(Math.abs(f(r))<1e-6*(1+Math.abs(f0)+Math.abs(f1)))roots.push(r); // odrzuca bieguny
+        }}
+      if(i>0&&i+2<=N&&depth>0){ // punkt przegięcia: tu mogą się ukrywać bliskie pierwiastki (np. potrójne skupiska)
+        const g0=fs[i-1],g1=f0,g2=fs[i+1],g3=fs[i+2];
+        if(fin(g0)&&fin(g1)&&fin(g2)&&fin(g3)){
+          const d1=g2-2*g1+g0,d2=g3-2*g2+g1,noise=64*Number.EPSILON*Math.max(Math.abs(g0),Math.abs(g1),Math.abs(g2),Math.abs(g3));
+          if(Math.abs(d1)>noise&&Math.abs(d2)>noise&&(d1<0)!==(d2<0)) scan(xs[i-1],xs[i+2],40,depth-1);
+        }}
+      if(i>0&&i<N){const fm=fs[i-1],f1=fs[i+1];
+        const nz=16*Number.EPSILON*Math.max(Math.abs(fm),Math.abs(f0),Math.abs(f1));
+        if(fin(fm)&&fin(f0)&&fin(f1)&&(fm<0)===(f0<0)&&(f1<0)===(f0<0)&&(f0-fm)*(f1-f0)<0&&Math.abs(f0-fm)>nz&&Math.abs(f1-f0)>nz){
+          if(depth>0) scan(xs[i-1],xs[i+1],40,depth-1);
+          else{ // najgłębszy poziom: możliwy pierwiastek wielokrotny (styczny)
+            const sg=f0>0?1:-1;let lo=xs[i-1],hi=xs[i+1];
+            for(let k=0;k<200;k++){const m1=lo+(hi-lo)/3,m2=hi-(hi-lo)/3;if(sg*f(m1)<sg*f(m2))hi=m2;else lo=m1}
+            const xe=(lo+hi)/2,fe=f(xe);
+            if(fin(fe)&&(fe===0||(fe<0)!==(f0<0)))roots.push(refine(xs[i-1],xe,fm),refine(xe,xs[i+1],fe||f1));
+            else if(fin(fe)&&Math.abs(fe)<=1e-4*Math.min(Math.abs(fm),Math.abs(f1))){roots.push(xe);multi.add(xe)}
+          }
+        }}
     }
-    else if(Number.isFinite(f0)&&Number.isFinite(f1)&&i>1){ // pierwiastki podwójne (styczne): minimum |f|
-      const xm=x0-(b-a)/N,fm=f(xm);
-      if(Math.abs(f0)<Math.abs(fm)&&Math.abs(f0)<Math.abs(f1)&&(fm<0)===(f0<0)&&(f1<0)===(f0<0)){
-        let lo=xm,hi=x1;for(let k=0;k<200;k++){const m1=lo+(hi-lo)/3,m2=hi-(hi-lo)/3;if(Math.abs(f(m1))<Math.abs(f(m2)))hi=m2;else lo=m1}
-        const r=(lo+hi)/2;if(Math.abs(f(r))<1e-12*(1+Math.abs(fm))){roots.push(r);multi.add(r)}
-      }
-    }
-    x0=x1;f0=f1;
   }
-  if(f0===0)roots.push(x0);
-  const u=[];for(const r of roots.sort((p,q)=>p-q))if(!u.length||Math.abs(r-u[u.length-1])>1e-9*(1+Math.abs(r)))u.push(r);
+  scan(A,B,20000,5);
+  const u=[];
+  for(const r of roots.sort((p,q)=>p-q)){
+    const last=u[u.length-1];
+    // pierwiastki bliższe niż 1e-8 (względnie) traktujemy jako jeden pierwiastek wielokrotny
+    if(last===undefined||Math.abs(r-last)>1e-8*(1+Math.abs(r)))u.push(r);
+    else{const keep=Math.abs(f(r))<Math.abs(f(last))?r:last;multi.add(keep);u[u.length-1]=keep}
+  }
   return u;
 }
 const GK=[[0,0.209482141084727828012999174891714],[0.207784955007898467600689403773245,0.204432940075298892414161999234649],[0.405845151377397166906606412076961,0.190350578064785409913256402421014],[0.586087235467691130294144845693013,0.169004726639267902826583426598550],[0.741531185599394439863864773280788,0.140653259715525918745189590510238],[0.864864423359769072789712788640926,0.104790010322250183839876322541518],[0.949107912342758524526189684047851,0.063092092629978553290700663189204],[0.991455371120812639206854697526329,0.022935322010529224963732008058970]];
